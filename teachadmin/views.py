@@ -430,7 +430,7 @@ class HomeRoomUpdateView(LoginRequiredMixin, generic.UpdateView):
         students = Student.objects.filter(pk__in=self.request.POST.getlist('selected_students'))
         if students.count() >= 1:
             for student in students:
-                if student.homeroom != homeroom
+                if student.homeroom != homeroom:
                     student.homeroom = homeroom
                     student.save()
 
