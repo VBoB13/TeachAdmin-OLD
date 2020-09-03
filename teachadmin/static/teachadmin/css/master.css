@@ -1,0 +1,9 @@
+#selected_students {
+    width:200px;
+    height:200px;
+    margin: 10px;
+}
+#selected_students:focus {
+    min-width:200px;
+    width: auto;
+}

@@ -1,0 +1,100 @@
+{% load bootstrap4 %}
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>TeachAdmin</title>
+
+    <!-- Loading Bootstrap4 CSS and Javascript -->
+    {% bootstrap_css %}
+    {% bootstrap_javascript jquery='full' %}
+
+    {% bootstrap_messages %}
+
+    <link rel="stylesheet" type="text/css" href="{% static 'teachadmin/css/master.css' %}">
+
+  </head>
+  <body class="p-3 mb-2 bg-dark text-white">
+    <nav class="navbar sticky-top navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <a class="navbar-brand" href="#">Life Project</a>
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
+          </li>
+          {% if user.username == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'budgettracker:index' %}">BudgetTracker</a>
+            </li>
+          {% endif %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'teachadmin:index' %}">TeachAdmin</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'teachadmin:about' %}">About</a>
+          </li>
+
+          {% if user.is_authenticated and user.username != 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'teachadmin:teacher' user.teacher.pk %}">Profile</a>
+            </li>
+            <li class="nav-item">
+              <a class='nav-link' href="{% url 'teachadmin:logout' %}">Logout {{ user.teacher }}</a>
+            </li>
+          {% elif user.is_authenticated and user.username == 'admin' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'teachadmin:logout' %}">Logout {{ user }}</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class='nav-link' href="{% url 'teachadmin:login' %}">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'teachadmin:register' %}">Register</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+    <div class="container">
+      <p>
+        {% block view_title_block %}
+
+        {% endblock %}
+      </p>
+
+      <p>
+        {% block content_block %}
+
+        {% endblock %}
+      </p>
+
+      <p>
+        {% block mid_block %}
+
+        {% endblock %}
+      </p>
+      
+      <p>
+        {% block bottom_block %}
+
+        {% endblock %}
+      </p>
+
+      <p>
+        {% block far_bottom_block %}
+
+        {% endblock %}
+      </p>
+      <p>
+        {% block extra_block %}
+
+        {% endblock %}
+      </p>
+
+    </div>
+
+  </body>
+</html>

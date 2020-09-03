@@ -1,0 +1,31 @@
+{% extends 'teachadmin/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 align="center" class="display-4">{{ view_title }}</h1>
+    </div>
+{% endblock view_title_block %}
+
+
+{% block content_block %}
+        <form method="POST">
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            {% if available_students.count >= 1 %}
+                <select name="selected_students" id="select_students" multiple class="form-control">
+                {% for student in available_students %}
+                    {% if student in homeroom.student_set.all %}
+                        <option value="{{ student.pk }}" selected>{{ student }}</option>
+                    {% else %}
+                        <option value="{{ student.pk }}">{{ student }}</option>
+                    {% endif %}
+                {% endfor %}
+                </select>
+            {% endif %}
+            <p>
+                <input type="submit" value="Save" class="btn btn-primary">
+            </p>
+        </form>
+{% endblock content_block %}

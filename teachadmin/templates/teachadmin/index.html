@@ -1,0 +1,84 @@
+{% extends "teachadmin/base.html" %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <h1 class="display-1" align="center" style="margin:50px;">
+      TeachAdmin
+    </h1>
+{% endblock %}
+
+{% block content_block %}
+  <div class="jumbotron bg-secondary" align="center">
+    <div class="row align-items-center">
+      <div class="col-4">
+        <h2>Schools ({{ schools.count }})</h2>
+        <a href="{% url 'teachadmin:school_list' %}">
+          <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-building" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M14.763.075A.5.5 0 0 1 15 .5v15a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V14h-1v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V10a.5.5 0 0 1 .342-.474L6 7.64V4.5a.5.5 0 0 1 .276-.447l8-4a.5.5 0 0 1 .487.022zM6 8.694L1 10.36V15h5V8.694zM7 15h2v-1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5V15h2V1.309l-7 3.5V15z"/>
+            <path d="M2 11h1v1H2v-1zm2 0h1v1H4v-1zm-2 2h1v1H2v-1zm2 0h1v1H4v-1zm4-4h1v1H8V9zm2 0h1v1h-1V9zm-2 2h1v1H8v-1zm2 0h1v1h-1v-1zm2-2h1v1h-1V9zm0 2h1v1h-1v-1zM8 7h1v1H8V7zm2 0h1v1h-1V7zm2 0h1v1h-1V7zM8 5h1v1H8V5zm2 0h1v1h-1V5zm2 0h1v1h-1V5zm0-2h1v1h-1V3z"/>
+          </svg>
+        </a>
+      </div>
+      <div class="col-4">
+        <h2>Home rooms ({{ homerooms.count }})</h2>
+        <a href="{% url 'teachadmin:homeroom_list' %}">
+          <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-house-door-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6.5 10.995V14.5a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .146-.354l6-6a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 .146.354v7a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5V11c0-.25-.25-.5-.5-.5H7c-.25 0-.5.25-.5.495z"/>
+            <path fill-rule="evenodd" d="M13 2.5V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z"/>
+          </svg>
+        </a>
+      </div>
+      <div class="col-4">
+        <h2>Subjects ({{ subjects.count }})</h2>
+        <a href="{% url 'teachadmin:subject_list' %}">
+          <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-book-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15.261 13.666c.345.14.739-.105.739-.477V2.5a.472.472 0 0 0-.277-.437c-1.126-.503-5.42-2.19-7.723.129C5.696-.125 1.403 1.56.277 2.063A.472.472 0 0 0 0 2.502V13.19c0 .372.394.618.739.477C2.738 12.852 6.125 12.113 8 14c1.875-1.887 5.262-1.148 7.261-.334z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+    <div class="row align-items-center">
+      <div class="col-4">
+        <h2>Other students ({{ other_students.count }})</h2>
+        <a href="">
+          <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-person-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+          </svg>
+        </a>
+      </div>
+      <div class="col-4">
+        <h2>All students ({{ all_students.count }})</h2>
+        <a href="">
+          <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-people-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+          </svg>
+        </a>
+      </div>
+      <div class="col-4">
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block mid_block %}
+  
+{% endblock %}
+
+
+{% block bottom_block %}
+  
+{% endblock %}
+
+{% block far_bottom_block %}
+  
+{% endblock %}
+
+{% block extra_block %}
+  {% if not user.is_authenticated %}
+    <p><h1>Welcome to TeachAdmin!</h1></p>
+    <p><h4>Please <a href={% url 'teachadmin:login' %}><strong>login</strong></a> to use the system.</h4></p>
+    <p>Or <a href={% url 'teachadmin:register' %}><strong>register here</strong></a> if you don't have an account.</p>
+    <p>What is <strong><a href="{% url 'teachadmin:about' %}">TeachAdmin</a></strong>?</p>
+  {% endif %}
+{% endblock %}
+

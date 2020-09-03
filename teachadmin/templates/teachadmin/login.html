@@ -1,0 +1,19 @@
+{% extends 'teachadmin/base.html' %}
+
+{% block content_block %}
+
+<div class="jumbotron bg-secondary">
+    <p><h1>Login</h1><p>
+    <form action="{% url 'teachadmin:login' %}" method="POST" class="form">
+        {% csrf_token %}
+        <label for="username">Username:</label>
+        <input type="text" name="username" placeholder="Enter Username">
+
+        <label for="password">Password:</label>
+        <input type="password" name="password">
+
+        <input type="submit" name="" value="Login">
+    </form>
+</div>
+
+{% endblock content_block %}

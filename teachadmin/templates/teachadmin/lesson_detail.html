@@ -1,0 +1,68 @@
+{% extends 'teachadmin/base.html' %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 class="display-4" align="center">
+            {{ view_title }}
+        </h1>
+    </div>
+{% endblock view_title_block %}
+
+{% block content_block %}
+    <div class="row">
+        <div class="col-4">
+            <h3>Homeworks</h3>
+            {% for homework in lesson.homework_set.all %}
+                {% if forloop.first %}
+                    <ul>
+                {% endif %}
+
+                    <li><a href="{% url 'teachadmin:homework_detail' homework.lesson.subject.pk homework.lesson.pk homework.pk %}">{{ homework }}</a></li>
+
+                {% if forloop.last %}
+                    </ul>
+                {% endif %}
+            {% empty %}
+                <h6 class="text-muted">No homework for {{ lesson }} yet...</h6>
+            {% endfor %}
+            <p>
+                <strong><a href="{% url 'teachadmin:lesson_add_homework' lesson.subject.pk lesson.pk %}">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
+                </svg>
+                Add homework</a></strong>
+            </p>
+        </div>
+        <div class="col-8">
+            <h1 class="display-1">
+                Graph here~
+            </h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-4">
+            <h3>Tests</h3>
+            {% for test in lesson.lessontest_set.all %}
+                {% if forloop.first %}
+                    <ul>
+                {% endif %}
+
+                <li><a href="{% url 'teachadmin:lessontest_detail' test.lesson.subject.pk test.lesson.pk test.pk %}">{{ test }}</a></li>
+
+                {% if forloop.last %}
+                    </ul>
+                {% endif %}
+            {% empty %}
+                <h6 class="text-muted">No tests for {{ lesson }} yet...</h6>
+            {% endfor %}
+            <p>
+                <strong><a href="{% url 'teachadmin:lesson_add_test' lesson.subject.pk lesson.pk %}">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
+                </svg>
+                Add test</a></strong>
+            </p>
+        </div>
+    </div>
+{% endblock content_block %}

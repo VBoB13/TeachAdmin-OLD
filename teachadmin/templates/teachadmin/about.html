@@ -1,0 +1,32 @@
+{% extends 'teachadmin/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 align="center">About</h1>
+    </div>
+{% endblock %}
+
+{% block content_block %}
+    <p><h1>Mission</h1></p>
+    <p>
+        The main mission of TeachAdmin is to help all teachers to manage their students through data.</br>
+        This world has gone way too far without taking real life data into account when making critical decisions.
+        Teachers are faced with piles of decisions due to changing circumstances their students are in.</br>
+        To always be on the frontline of personal progress requires insight into ALL students -
+        not just the ones the teacher happen to connect with exceptionally well.
+        By automatically providing graphs for individual kids and whole groups/homerooms, teachers do not have to keep their own
+        Google SpreadSheets to generate the data they need anymore. All they have to do now is to sipmly add the scores into TeachAdmin
+        and then analyze the graphs that pop up.
+        While the long-term goal is to be able to predict certain behavior/events and 
+        thus helping the teacher out in helping each individual student out, the starting point is simply going to be displaying graphs 
+        that are useful for the teacher to improve their students' results.
+    </p>
+{% endblock %}
+
+{% block mid_block %}
+    {% if user.is_authenticated %}
+        <a href="{% url 'teachadmin:teacher' user.teacher.pk %}">My Desk</a>
+    {% endif %}
+{% endblock %}

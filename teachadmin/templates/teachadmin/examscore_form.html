@@ -1,0 +1,34 @@
+{% extends 'teachadmin/base.html' %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 class="display-1" align="center">
+            {{ view_title }}
+        </h1>
+    </div>
+{% endblock view_title_block %}
+
+{% block content_block %}
+    <div class="row">
+        <div class="col-4">
+            <h1 class="display-4" align="center">
+                {{ exam }}
+                ({{ subject }})
+            </h1>
+        </div>
+        <div class="col-8">
+            <form action="" method="POST">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <label for="subject_students">Student</label><br>
+                <select name="student" id="subject_students">
+                    {% for student in subject.student_set.all %}
+                        <option value="{{ student.pk }}">{{ student }}</option>
+                    {% endfor %}
+                </select><br><br>
+                <input type="submit" value="Add score">
+            </form>
+        </div>
+    </div>
+{% endblock content_block %}

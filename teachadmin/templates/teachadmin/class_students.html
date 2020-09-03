@@ -1,0 +1,114 @@
+{% extends "teachadmin/base.html" %}
+{% load static %}
+{% load bootstrap4 %}
+{% load extrafilters %}
+
+
+{% block content_block %}
+  <h1>{{ student_class }}</h1>
+  <hr>
+
+  {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+  <div class="row">
+    <div class="col-2">
+    {% if studentClass_size >= 20 %}
+      <ul>
+        {% for student in students_list|slice:":20" %}
+          <li><a href="{% url 'teachadmin:studentDetail' student_class.pk student.pk %}">{{ student }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="col-2">
+      <ul>
+        {% for student in students_list|slice:"20:" %}
+          <li><a href="{% url 'teachadmin:studentDetail' student_class.pk student.pk %}">{{ student }}</a></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+        <ul>
+          {% for student in students_list %}
+            <li><a href="{% url 'teachadmin:studentDetail' student_class.pk student.pk %}">{{ student }}</a></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+      <div class="col-8">
+        <img src="{% get_static_prefix %}teachadmin/classes/{{ student_class.name }}.png"
+        alt="{{ student_class }} Graph" class="img-fluid rounded">
+      </div>
+  </div>
+  <hr>
+{% endblock %}
+
+{% block mid_block %}
+  <div class="row">
+    <div class="col-12">
+      {% for basekey, basevalue in min_max_dict.items %}
+        {% for cat, info in basevalue.items %}
+          {% if info|get_type == dict %}
+            {% for infokey, infovalue in info.items %}
+              <h5>{{ cat }}: {{ infokey }} -- {{ infovalue }}</h5>
+            {% endfor %}
+          {% else %}
+            <h5>{{ info }}</h5>
+          {% endif %}
+        {% endfor %}
+      {% empty %}
+        <h5>No Comments Available for {{ studentClass }}</h5>
+      {% endfor %}
+      <hr>
+    </div>
+  </div>
+{% endblock %}
+
+{% block far_bottom_block %}
+  <div class="row">
+    <div class="col-12">
+      <h3>Add Student</h3>
+      <form action="{% url 'teachadmin:addStudent' student_class.pk %}" method="POST"
+              class="form">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary">
+            Add Student
+          </button>
+        {% endbuttons %}
+      </form>
+      <hr>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-6">
+      <h3>Add Test to Class</h3>
+      <form action="{% url 'teachadmin:addTest' student_class.pk %}" method="POST">
+        {% csrf_token %}
+        {% bootstrap_form testform %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary">
+            Add Test
+          </button>
+        {% endbuttons %}
+      </form>
+    </div>
+
+    <div class="col-6">
+      <h3>Add Assignment to Class</h3>
+      <form action="{% url 'teachadmin:addAssignment' student_class.pk %}"
+        enctype="multipart/form-data" class="form" method="POST">
+        {% csrf_token %}
+        <p>
+          <input type="file" name="assignmentFile">
+        </p>
+        {% buttons %}
+          <button type="submit" class="btn btn-primary">
+            Add Assignment(s)
+          </button>
+        {% endbuttons %}
+
+      </form>
+    </div>
+  </div>
+  <hr>
+{% endblock %}

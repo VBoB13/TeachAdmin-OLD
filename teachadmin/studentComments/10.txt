@@ -1,0 +1,42 @@
+
+----------------------------------------------------------
+Name: 			Alice                     
+Listening: 		60                     
+Reading: 		39.0                     
+Family & Friends: 	60.0                    
+Phonics: 		39                    
+Running Record: 	99                    
+Homework: 		97.92                    
+Behavior: 		95                    
+Quiz: 			89.0                    
+
+--- Comments --- 
+Listening:
+	Alice got a perfect score - 60 - on the listening section! Incredible!Alice's score was higher than the average listening score! Great!
+
+Family & Friends:
+	Alice scored a full pot - 60.0 points in the Family and Friends seciton!
+Alice scored higher than the average for the Family & Friends section. Great job!
+
+Running record:
+	Alice scored 99 for reading.
+Even if she still have room for growth, Alice is doing very well.
+Alice scored higher than average on the Running Record section. Great!
+
+Homework:
+	Alice scored a full 97.92 on the Homework section and that is fabulous.
+Alice scored higher than the average student on the Homework section.
+
+
+Behavior:
+	Alice's behavior in class is really good.
+
+
+Quiz:
+	Alice is often prepared for the weekly quizzes and earned a score of 89.0. Very good!
+
+
+Overall:
+	I am extremely proud of Alice.
+I look forward to seeing her continue to grow.
+----------------------------------------------------------

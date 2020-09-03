@@ -1,0 +1,23 @@
+{% extends 'teachadmin/base.html' %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 align="center" class="display-4">
+            {% if not form.instance.pk %}
+                Create School
+            {% else %}
+                Update School ({{ form.instance }})
+            {% endif %}
+        </h1>
+    </div>
+{% endblock view_title_block %}
+
+{% block content_block %}
+    <form method="POST">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <input type="submit" class="btn btn-primary" name="" value="Add school">
+    </form>
+{% endblock content_block %}
+

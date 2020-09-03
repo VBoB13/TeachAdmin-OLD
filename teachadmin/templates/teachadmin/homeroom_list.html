@@ -1,0 +1,49 @@
+{% extends 'teachadmin/base.html' %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <div class="row">
+            <div class="col-12" align="center">
+                <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-house-door" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M7.646 1.146a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 .146.354v7a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1-.5-.5v-4H7v4a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .146-.354l6-6zM2.5 7.707V14H6v-4a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5v4h3.5V7.707L8 2.207l-5.5 5.5z"/>
+                    <path fill-rule="evenodd" d="M13 2.5V6l-2-2V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5z"/>
+                </svg>
+                <h1>Home rooms</h1>
+            </div>
+        </div>
+    </div>
+{% endblock view_title_block %}
+
+
+{% block content_block %}
+    {% for homeroom in homerooms %}
+        {% if forloop.first %}
+            <p><ul>
+        {% endif %}
+            <li>
+                <h5><strong>
+                    <a href="{% url 'teachadmin:homeroom_detail' homeroom.pk %}">{{ homeroom|title }}</a>
+                </strong>
+                    ({{ homeroom.school }})
+                    <a href="{% url 'teachadmin:homeroom_delete' homeroom.pk %}">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-clipboard-minus" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+                            <path fill-rule="evenodd" d="M9.5 1h-3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3zm-1 9.5A.5.5 0 0 1 6 9h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </a>
+                </h5>
+            </li>
+        {% if forloop.last %}
+            </ul></p>
+        {% endif %}
+    {% empty %}
+        <p><h3 class="text-muted">No home rooms...</h3>
+    {% endfor %}
+        <strong><a href="{% url 'teachadmin:homeroom_new' %}">
+            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
+            </svg>
+            Add homeroom</a>
+        </strong>
+{% endblock content_block %}

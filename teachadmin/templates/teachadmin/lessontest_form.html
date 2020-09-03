@@ -1,0 +1,24 @@
+{% extends 'teachadmin/base.html' %}
+{% load bootstrap4 %}
+{% load static %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 class="display-4" align="center">
+            {{ view_title }}
+        </h1>
+    </div>
+{% endblock view_title_block %}
+
+
+{% block content_block %}
+    <div class="row">
+        <div class="col-12">
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <input type="submit" class="btn btn-primary" value="Add test to {{ lesson }}">
+            </form>
+        </div>
+    </div>
+{% endblock content_block %}

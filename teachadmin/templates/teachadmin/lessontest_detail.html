@@ -1,0 +1,54 @@
+{% extends 'teachadmin/base.html' %}
+{% load bootstrap4 %}
+{% load static %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 class="display-4" align="center">
+            {{ lessontest }}
+        </h1>
+    </div>
+{% endblock view_title_block %}
+
+
+{% block content_block %}
+    <div class="row">
+        <div class="col-4">
+            <h3><u>Test Info:</u></h3>
+            <p><strong>Max Score:</strong><br>{{ lessontest.max_score }}</p>
+            <p><strong>Min. Score:</strong><br>{{ lessontest.min_score }}</p>
+            <p><strong>Deadline:</strong><br>{{ lessontest.test_date }}</p>
+
+            <h3><u>Scores:</u></h3>
+            {% for score in lessontest.lessontestscore_set.all %}
+                {% if forloop.first %}
+                    <ul>
+                {% endif %}
+                
+                <li>{{ score.student }} - {{ score }}</li>
+
+                {% if forloop.last %}
+                    </ul>
+                {% endif %}
+            {% empty %}
+                <h6 class="text-muted">No scores in {{ lessontest }} yet...</h6>
+            {% endfor %}
+            <p>
+                <strong><a href="{% url 'teachadmin:lessontest_add_score' lessontest.lesson.subject.pk lessontest.lesson.pk lessontest.pk %}">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
+                </svg>
+                Add score</a></strong>
+            </p>
+        </div>
+        <div class="col-8">
+            {% if graph %}
+                <img src="{{ MEDIA_URL }}/lessontests/{{ lessontest.pk }}.png" alt="{{ lessontest|title }} graph" class="img-fluid rounded" />
+            {% else %}
+                <h1 class="display-1">
+                    Error loading graph...
+                </h1>
+            {% endif %} 
+        </div>
+    </div>
+{% endblock content_block %}
