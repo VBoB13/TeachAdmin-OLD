@@ -410,6 +410,9 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
             self.view_title = 'Create Homeroom for {}'.format(school)
         else:
             self.view_title = 'Create Homeroom'
+
+        fileform = forms.HomeRoomFormWithFile()
+        context['fileform'] = fileform
     
         context['view_title'] = self.view_title
 
@@ -1252,6 +1255,10 @@ def register(request):
                             {'user_form':user_form,
                                 'teacher_form':teacher_form,
                                 'registered':registered})
+
+@login_required
+def addHomeroomWithFile(request):
+    pass
 
 def addStudent(request, student_group_id):
 

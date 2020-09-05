@@ -57,14 +57,17 @@ class AssignmentForm(forms.ModelForm):
         fields = ['name', 'min_score', 'max_score', 'subject']
 
 
-class StudentClassFormWithFile(forms.Form):
-    file = forms.FileField()
+class HomeRoomFormWithFile(forms.Form):
+    file = forms.FileField(
+        allow_empty_file=False,
+        required=True,
+        help_text="Make sure you've followed the right format and made the file into a .csv-file")
 
 
 class HomeRoomForm(forms.ModelForm):
     class Meta:
         model = HomeRoom
-        fields = ('name', 'school', 'grade')
+        exclude = ('teacher', 'created_by')
 
 
 class HomeworkForm(forms.ModelForm):

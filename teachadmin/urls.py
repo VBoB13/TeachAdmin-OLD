@@ -17,6 +17,7 @@ urlpatterns = [
     path('schools/<int:school_pk>/homerooms/new/', views.HomeRoomCreateView.as_view(), name='school_add_homeroom'),
     path('homeroom/', views.HomeRoomListView.as_view(), name='homeroom_list'),
     path('homeroom/new/', views.HomeRoomCreateView.as_view(), name='homeroom_new'),
+    path('homeroom/new/with-file/', views.addHomeroomWithFile, name='homeroom_new_file'),
     path('homeroom/<int:pk>/', views.HomeRoomDetailView.as_view(), name='homeroom_detail'),
     path('homeroom/<int:pk>/delete/', views.HomeRoomDeleteView.as_view(), name='homeroom_delete'),
     path('homeroom/<int:pk>/update/', views.HomeRoomUpdateView.as_view(), name='homeroom_update'),

@@ -11,13 +11,13 @@
 
 {% block content_block %}
 
-    <form action="" class="form" method="POST">
+    <form method="POST">
         {% csrf_token %}
-        {{ form.as_p }}
+        {% bootstrap_form form %}
         
         {% for student in teacher.student_set.all %}
             {% if forloop.first %}
-                <select name="added_students" id="selected_students" multiple>
+                <select name="added_students" id="selected_students" class="form-control" multiple>
             {% endif %}
             
             <option value="{{ student.pk }}" 
@@ -29,6 +29,7 @@
 
             {% if forloop.last %}
                 </select>
+                <p><small class="form-text text-muted">Ctrl + Right-Click to select multiple students.</small></p>
             {% endif %}
         {% empty %}
 

@@ -10,22 +10,42 @@
 
 
 {% block content_block %}
-        <form method="POST">
-            {% csrf_token %}
-            {% bootstrap_form form %}
-            {% if available_students.count >= 1 %}
-                <select name="selected_students" id="select_students" multiple class="form-control">
-                {% for student in available_students %}
-                    {% if student in homeroom.student_set.all %}
-                        <option value="{{ student.pk }}" selected>{{ student }}</option>
-                    {% else %}
-                        <option value="{{ student.pk }}">{{ student }}</option>
-                    {% endif %}
-                {% endfor %}
-                </select>
-            {% endif %}
-            <p>
-                <input type="submit" value="Save" class="btn btn-primary">
+    <div class="row">
+        <div class="col-6">
+            <h3><u>Manually:</u></h3>
+            <form method="POST">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                {% if available_students.count >= 1 %}
+                    <select name="selected_students" id="select_students" multiple class="form-control">
+                    {% for student in available_students %}
+                        {% if student in homeroom.student_set.all %}
+                            <option value="{{ student.pk }}" selected>{{ student }}</option>
+                        {% else %}
+                            <option value="{{ student.pk }}">{{ student }}</option>
+                        {% endif %}
+                    {% endfor %}
+                    </select>
+                {% endif %}
+                <p>
+                    <input type="submit" value="Create" class="btn btn-primary">
+                </p>
+            </form>
+        </div>
+        <div class="col-6">
+            <h3><u>With file:</u></h3>
+            <p class="text-justify">
+                This way, you can create a homeroom while simultaneously adding students into it at the same time.
+                This is suitable for people who already have basic data of their students in tabular form (Excel/Google sheets) as you this will attempt to fill all the necessary data for you.
             </p>
-        </form>
+            <p class="text-justify text-muted font-italic">
+                How? Check out the <strong><a href="">format</a></strong> first.
+            </p>
+            <form action="{% url 'teachadmin:homeroom_new_file' %}" method="POST">
+                {% csrf_token %}
+                {% bootstrap_form fileform %}
+                <input type="submit" value="Submit" class="btn btn-primary">
+            </form>
+        </div>
+    </div>
 {% endblock content_block %}

@@ -2,6 +2,14 @@
 {% load bootstrap4 %}
 {% load static %}
 
+{% block view_title_block %}
+  <div class="jumbotron bg-secondary">
+    <h1 align="center" class="display-4">
+      {{ student }} {% if student.homeroom %}({{ student.homeroom.school }}){% endif %}
+    </h1>
+  </div>
+{% endblock view_title_block %}
+
 {% block content_block %}
     <p><h2>{{ student }}</h2></p>
       <div class="row border-bottom border-secondary">
@@ -46,10 +54,15 @@
     <h3>Subjects</h3>
     <ul>
       {% for subject in subjects %}
-        <li>
-          <h4>{{ subject }}</h4>
+        <li><h4>{{ subject }}</h4>
           {% for exam in subject.exam_set.all %}
-            <li><h5>{{ exam }}</h5></li>
+            {% if forloop.first %}
+              <ul>
+            {% endif %}
+            <li><h6>{{ exam }}</h6></li>
+            {% if forloop.last %}
+              </ul>
+            {% endif %}
           {% empty %}
             <p>
               <h5 class="text-muted">No exams for {{ subject }} yet...</h5>
