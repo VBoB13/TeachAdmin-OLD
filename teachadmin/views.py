@@ -392,11 +392,40 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
     model = HomeRoom
     form_class = forms.HomeRoomForm
 
+    def _process_homeroomfile(self, homeroom):
+        if self.request.method == "POST":
+            try:
+                results = pd.read_csv(
+                    self.request.FILES['homeroomfile'])
+            except Exception as err:
+                print("Unable to read .csv-file")
+                print(err)
+                raise Http404("Unable to read CSV-file")
+            else:
+                print(results)
+                results.info()
+
+                for row in results.itertuples():
+                    student, created = Student.objects.get_or_create(
+                        student_number=row.Number,
+                        first_name=row.First,
+                        last_name=row.Last,
+                        gender=row.Gender,
+                        homeroom=homeroom
+                    )
+                    print(student)
+        else:
+            print("Try with a POST-reqest next time.")
+
+
     def form_valid(self, form):
         teacher = get_object_or_404(Teacher, user=self.request.user)
 
         homeroom = form.save()
         teacher.homeroom_set.add(homeroom)
+
+        if self.request.FILES.get('homeroomfile', False):
+            self._process_homeroomfile(homeroom)
 
         return HttpResponseRedirect(homeroom.get_absolute_url())
 
@@ -410,9 +439,6 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
             self.view_title = 'Create Homeroom for {}'.format(school)
         else:
             self.view_title = 'Create Homeroom'
-
-        fileform = forms.HomeRoomFormWithFile()
-        context['fileform'] = fileform
     
         context['view_title'] = self.view_title
 
@@ -1255,10 +1281,6 @@ def register(request):
                             {'user_form':user_form,
                                 'teacher_form':teacher_form,
                                 'registered':registered})
-
-@login_required
-def addHomeroomWithFile(request):
-    pass
 
 def addStudent(request, student_group_id):
 

@@ -11,7 +11,7 @@ class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     # Additional Info
     portfolio_site = models.URLField(blank=True)
-    profile_pic = models.ImageField(upload_to='profile_pics', blank=True)
+    profile_pic = models.ImageField(upload_to='teachers/profile_pics/', blank=True)
     country = CountryField(blank=True, blank_label='(Select country)')
 
     def __str__(self):
@@ -192,13 +192,13 @@ class StudentClassTest(models.Model):
 
 class Student(models.Model):
     first_name = models.CharField(max_length=50)
-    student_number = models.PositiveSmallIntegerField(null=True, default=None)
+    last_name = models.CharField(max_length=50, null=True)
+    student_number = models.CharField(max_length=20, null=True, default=None)
     homeroom = models.ForeignKey(HomeRoom, blank=True, null=True, on_delete=models.SET_NULL)
     subject = models.ManyToManyField(Subject)
     teacher = models.ManyToManyField(Teacher)
     studentClass = models.ManyToManyField(StudentClass)
     
-
     FEMALE = 'F'
     MALE = 'M'
     OTHER = 'O'
@@ -217,10 +217,12 @@ class Student(models.Model):
     class Meta:
         ordering = [
             'first_name',
+            'last_name',
+            'student_number'
         ]
 
     def __str__(self):
-        return "{}".format(self.first_name)
+        return self.first_name
 
     def get_absolute_url(self):
         return reverse("teachadmin:student_detail", kwargs={"pk": self.pk})
