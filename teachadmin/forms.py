@@ -69,6 +69,12 @@ class HomeworkForm(forms.ModelForm):
         fields = '__all__'
 
 
+class HomeworkScoreForm(forms.ModelForm):
+    class Meta:
+        model = HomeworkScore
+        exclude = ['student',]
+
+
 class SubjectForm(forms.ModelForm):
     class Meta:
         model = Subject

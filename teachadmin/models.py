@@ -106,10 +106,12 @@ class Exam(models.Model):
 class Lesson(models.Model):
     name = models.CharField(max_length=100)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    start_date = models.DateField(verbose_name="Start date", null=True)
+    end_date = models.DateField(verbose_name="End date", null=True)
 
     class Meta:
         ordering = [
-            'subject',
+            'start_date',
             'name'
         ]
 
@@ -170,6 +172,7 @@ class StudentClass(models.Model):
     def __str__(self):
         return "{} {}".format(self.grade, self.name)
 
+
 class StudentClassTest(models.Model):
     studentClass = models.ManyToManyField(StudentClass)
     name = models.CharField(max_length=25)
@@ -189,6 +192,7 @@ class StudentClassTest(models.Model):
 
     def __str__(self):
         return "{}".format(self.name)
+
 
 class Student(models.Model):
     first_name = models.CharField(max_length=50)
@@ -222,10 +226,14 @@ class Student(models.Model):
         ]
 
     def __str__(self):
-        return self.first_name
+        if self.last_name == None:
+            return self.first_name
+        else:
+            return "{} {}".format(self.first_name, self.last_name)
 
     def get_absolute_url(self):
         return reverse("teachadmin:student_detail", kwargs={"pk": self.pk})
+
 
 class Assignment(models.Model):
     name = models.CharField(max_length=50)
@@ -248,6 +256,7 @@ class Assignment(models.Model):
     def __str__(self):
         return "{}".format(self.name)
 
+
 class StudentClassTestScore(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     test = models.ForeignKey(StudentClassTest, on_delete=models.CASCADE)
@@ -262,6 +271,7 @@ class StudentClassTestScore(models.Model):
     def __str__(self):
         return "{}: {} ({}%)".format(self.test, self.score,
             round((self.score/self.test.max_score)*100,1))
+
 
 class AssignmentScore(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
@@ -309,6 +319,7 @@ class ExamScore(models.Model):
             "subject_pk": self.exam.subject.pk
             })
 
+
 class LessonTestScore(models.Model):
     score = models.PositiveSmallIntegerField(default=0)
     lessonTest = models.ForeignKey(LessonTest, on_delete=models.CASCADE)
@@ -332,6 +343,7 @@ class LessonTestScore(models.Model):
                 "pk":self.lessonTest.pk
                 }
             )
+
 
 class BehaviorType(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
@@ -417,7 +429,12 @@ class HomeworkScore(models.Model):
         return self.score
 
     def get_absolute_url(self):
-        return reverse("teachadmin:homeworkscore_detail", kwargs={"pk": self.pk})
+        return reverse("teachadmin:homework_detail",
+                        kwargs={
+                            "subject_pk": self.homework.lesson.subject.pk,
+                            "lesson_pk": self.homework.lesson.pk,
+                            "pk": self.homework.pk
+                            })
     
     
     

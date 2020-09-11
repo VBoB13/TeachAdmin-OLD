@@ -2,7 +2,7 @@
 {% load bootstrap4 %}
 
 {% block view_title_block %}
-    <h1 class="display-1" align="center" style="margin:50px;">
+    <h1 class="display-3" align="center" style="margin:50px;">
       TeachAdmin
     </h1>
 {% endblock %}
@@ -37,10 +37,10 @@
         </a>
       </div>
     </div>
-    <div class="row align-items-center">
+    <div class="row align-items-center" style="margin-top:20px">
       <div class="col-4">
         <h2>Other students ({{ other_students.count }})</h2>
-        <a href="">
+        <a href="{% url 'teachadmin:other_students_list' %}">
           <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-person-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
           </svg>
@@ -48,7 +48,7 @@
       </div>
       <div class="col-4">
         <h2>All students ({{ all_students.count }})</h2>
-        <a href="">
+        <a href="{% url 'teachadmin:student_list' %}">
           <svg width="5em" height="5em" viewBox="0 0 16 16" class="bi bi-people-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
           </svg>

@@ -4,7 +4,7 @@
 
 {% block view_title_block %}
     <div class="jumbotron bg-secondary">
-        <h1 class="display-1" align="center">
+        <h1 align="center" class="display-4">
             {{ view_title }}
         </h1>
     </div>
@@ -29,7 +29,7 @@
         </div>
         <div class="col-8">
             {% if graph %}
-                <img src="{{ MEDIA_URL }}/exams/{{ exam.pk }}.png" alt="{{ exam|title }} graph" class="img-fluid rounded" />
+                <img src="data:image/png;base64,{{ graph }}" alt="{{ exam|title }} graph" class="img-fluid rounded" />
             {% else %}
                 <h1 class="display-1">
                     Error loading graph...

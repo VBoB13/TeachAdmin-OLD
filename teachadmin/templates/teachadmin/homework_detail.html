@@ -17,6 +17,24 @@
             <p><strong>Max Score:</strong><br>{{ homework.max_score }}</p>
             <p><strong>Min. Score:</strong><br>{{ homework.min_score }}</p>
             <p><strong>Deadline:</strong><br>{{ homework.deadline }}</p>
+            <p><strong>Scores:</strong>
+            {% for score in homework.homeworkscore_set.all %}
+                {% if forloop.first %}
+                    <ul>
+                {% endif %}
+                    <li>{{ score.student }} - {{ score.score }}</li>
+                {% if forloop.last %}
+                    </ul>
+                {% endif %}
+            {% endfor %}
+            </p>
+            <p>
+                <strong><a href="{% url 'teachadmin:homework_add_score' homework.lesson.subject.pk homework.lesson.pk homework.pk %}">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
+                </svg>
+                Add score</a></strong>
+            </p>
         </div>
         <div class="col-8">
             <h1 class="display-1">

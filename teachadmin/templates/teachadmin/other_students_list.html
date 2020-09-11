@@ -1,0 +1,30 @@
+{% extends 'teachadmin/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 align="center" class="display-4">
+            {{ view_title }}
+        </h1>
+    </div>
+{% endblock view_title_block %}
+
+{% block content_block %}
+    <div class="col-4">
+        {% for student in other_students %}
+            {% if forloop.first %}
+                <h3><u>Students:</u> ({{ other_students.count }})</h3>
+                <ol>
+            {% endif %}
+                <li><a href="{% url 'teachadmin:student_detail' student.pk %}">{{ student }}</a></li>
+            {% if forloop.last %}
+                </ol>
+            {% endif %}
+        {% empty %}
+            <h6 class="text-muted">
+                No students besides the ones already in your homerooms and/or subjects, {{ teacher }}.
+            </h6>
+        {% endfor %}
+    </div>
+{% endblock content_block %}

@@ -36,7 +36,13 @@
         </div>
         <div class="col-8">
             <h1 class="display-1">
-                Graph here~
+                {% if graph %}
+                    <img src="data:image/png;base64,{{ graph }}" alt="{{ lesson|title }} graph" class="img-fluid rounded" />
+                {% else %}
+                    <h1 align="center" class="display-4 text-muted">
+                        Unable to load graph...
+                    </h1>
+                {% endif %}
             </h1>
         </div>
     </div>

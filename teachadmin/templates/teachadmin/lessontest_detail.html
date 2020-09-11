@@ -43,7 +43,7 @@
         </div>
         <div class="col-8">
             {% if graph %}
-                <img src="{{ MEDIA_URL }}/lessontests/{{ lessontest.pk }}.png" alt="{{ lessontest|title }} graph" class="img-fluid rounded" />
+                <img src="data:image/png;base64,{{ graph }}" alt="{{ lessontest|title }} graph" class="img-fluid rounded" />
             {% else %}
                 <h1 class="display-1">
                     Error loading graph...

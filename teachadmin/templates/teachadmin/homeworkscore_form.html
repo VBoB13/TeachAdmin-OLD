@@ -1,0 +1,32 @@
+{% extends 'teachadmin/base.html' %}
+{% load bootstrap4 %}
+
+
+{% block view_title_block %}
+    <div class="jumbotron bg-secondary">
+        <h1 align="center" class="display-4">
+            {{ view_title }}
+        </h1>
+    </div>
+{% endblock view_title_block %}
+
+{% block content_block %}
+    <form method="POST">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {% for student in subject.student_set.all %}
+            {% if forloop.first %}
+                <p>
+                <label for="students_select">Student</label>
+                <select name="student" id="students_select" class="form-control">
+            {% endif %}
+            <option value="{{ student.pk }}">{{ student }}</option>
+            {% if forloop.last %}
+                </p></select>
+            {% endif %}
+        {% endfor %}
+        <p>
+            <input type="submit" value="Add score" class="btn btn-primary">
+        </p>
+    </form>
+{% endblock content_block %}

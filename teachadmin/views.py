@@ -18,6 +18,7 @@ from .models import (Teacher, School, StudentClass, Student,
                         BehaviorType, BehaviorEvent, 
                         Homework, HomeworkScore)
 from . import forms
+from django import forms as djangoforms
 
 from datetime import datetime
 import pandas as pd
@@ -26,6 +27,8 @@ from matplotlib import pyplot as plt
 from pandas.plotting import register_matplotlib_converters
 
 import os
+import io
+import urllib, base64
 
 # Create your views here.
 
@@ -213,20 +216,22 @@ class ExamDetailView(LoginRequiredMixin, generic.DetailView):
             axes.set_title("{} scores".format(self.object))
             plt.tight_layout()
 
-            # Getting the complete filepath to which we save the graph
-            base_dir = getattr(settings, "BASE_DIR", None)
+            # To save space on the server, I convert the graph into 64-bit data, convert it back into
+            buf = io.BytesIO()
+            fig = plt.gcf()
             try:
-                fig_dir = os.path.join(base_dir, "teachadmin\\media\\teachadmin", "exams\\")
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                figstring = base64.b64encode(buf.read())
+                uri = urllib.parse.quote(figstring)
             except Exception as err:
-                print("Couldn't join the paths of {} with base_dir".format(self.object))
+                print("Error while processing data for {}".format(self.object))
                 print(err)
             else:
-                print(fig_dir)
-                plt.savefig('{}{}.png'.format(fig_dir, self.object.pk), format='png')
                 plt.close(fig)
-                return True
+                return uri
         
-        return False
+        return None
 
     def get_queryset(self):
         return Exam.objects.filter(pk=self.kwargs['pk'])
@@ -532,6 +537,9 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'homework'
     model = Homework
 
+    def create_graph(self):
+        pass
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
@@ -539,6 +547,37 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
         context['view_title'] = view_title
 
         return context
+
+
+class HomeworkScoreCreateView(LoginRequiredMixin, generic.CreateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/index.html'
+
+    model = HomeworkScore
+    form_class = forms.HomeworkScoreForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        view_title = 'Add homework score'
+
+        if self.kwargs.get('homework_pk'):
+            homework = get_object_or_404(Homework, pk=self.kwargs.get('homework_pk'))
+            subject = homework.lesson.subject
+            form = forms.HomeworkScoreForm(initial={"homework":homework})
+            context['form'] = form
+            context['subject'] = subject
+
+        context['view_title'] = view_title
+
+        return context
+    
+    def form_valid(self, form):
+
+        student = get_object_or_404(Student, pk=self.request.POST.get('student'))
+        form.instance.student = student
+
+        return super().form_valid(form)
 
 
 class LessonDetailView(LoginRequiredMixin, generic.DetailView):
@@ -555,7 +594,81 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
             INPUT: None
             OUTPUT: Bool (True/False) """
 
+        lessontests = self.object.lessontest_set.all().order_by('test_date')
+        homeworks = self.object.homework_set.all()
         students = self.object.subject.student_set.all()
+
+        lessontestscores = LessonTestScore.objects.filter(lessonTest__in=lessontests).order_by('student', 'lessonTest')
+        homeworkscores = HomeworkScore.objects.filter(homework__in=homeworks).order_by('student', 'homework')
+
+        index = []
+        scores = {
+            'Student':[],
+        }
+        testscores = {}
+        homeworkscoredict = {}
+        
+        for studentcount, student in enumerate(students):
+            index.append(studentcount)
+            scores['Student'].append(str(student))
+
+            for lessontestscore in lessontestscores.filter(student=student):
+                if '{}({})'.format(lessontestscore.lessonTest, lessontestscore.lessonTest.pk) not in scores.keys():
+                    scores['{}({})'.format(lessontestscore.lessonTest, lessontestscore.lessonTest.pk)] = []
+                    testscores['{}({})'.format(lessontestscore.lessonTest, lessontestscore.lessonTest.pk)] = []
+                testscores['{}({})'.format(
+                    lessontestscore.lessonTest, lessontestscore.lessonTest.pk
+                    )].append(round(((lessontestscore.score/lessontestscore.lessonTest.max_score)*100),1))
+            
+            for key in testscores.keys():
+                scores[key].append(max(testscores[key]))
+
+            for homeworkscore in homeworkscores.filter(student=student):
+                if '{}({})'.format(homeworkscore.homework, homeworkscore.homework.pk) not in scores.keys():
+                    scores['{}({})'.format(homeworkscore.homework,
+                                           homeworkscore.homework.pk)] = []
+                    homeworkscoredict['{}({})'.format(
+                        homeworkscore.homework, homeworkscore.homework.pk)] = []
+                homeworkscoredict['{}({})'.format(
+                    homeworkscore.homework, homeworkscore.homework.pk
+                )].append(round(((homeworkscore.score/homeworkscore.homework.max_score)*100), 1))
+
+            for key in homeworkscoredict.keys():
+                scores[key].append(max(homeworkscoredict[key]))
+
+        print(scores)
+        scoresDF = pd.DataFrame(data=scores, index=index)
+        print(scoresDF)
+
+        fig = plt.figure()
+        sns.set_style(style='darkgrid')
+
+        sns.swarmplot(
+            data=scoresDF,
+            palette='deep'
+        )
+        axes = fig.gca()
+        axes.set_ylim(
+            (scoresDF.min(axis=0, numeric_only=True).min())-3,
+            (scoresDF.max(axis=0, numeric_only=True).max())+5
+        )
+        plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
+        axes.set_title("{} scores".format(self.object))
+        plt.tight_layout()
+
+        buf = io.BytesIO()
+        try:
+            plt.savefig(buf, format='png')
+        except Exception as err:
+            print("Couldn't generate the graph for {}".format(self.object))
+            print(err)
+        else:
+            buf.seek(0)
+            pltstring = base64.b64encode(buf.read())
+            uri = urllib.parse.quote(pltstring)
+            return uri
+
         return False
 
     def get_context_data(self, **kwargs):
@@ -619,6 +732,7 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
                 scoresDict['{}'.format(self.object.name)].append(score.score)
 
             scoresDF = pd.DataFrame(data=scoresDict, index=index)
+            scoresDF['Gender'] = scoresDF['Gender'].apply(gender_map)
 
             # Initiating graph
             fig = plt.figure()
@@ -646,19 +760,18 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
 
             # Getting the complete filepath to which we save the graph
             base_dir = getattr(settings, "BASE_DIR", None)
+            buf = io.BytesIO()
             try:
-                fig_dir = os.path.join(
-                    base_dir, "teachadmin\\media\\teachadmin", "lessontests\\")
+                plt.savefig(buf, format='png')
             except Exception as err:
-                print("Couldn't join the paths of {} with base_dir".format(self.object))
+                print("Couldn't generate the graph for {}".format(self.object))
                 print(err)
             else:
-                print(fig_dir)
-                plt.savefig('{}{}.png'.format(
-                    fig_dir, self.object.pk), format='png')
-                plt.close(fig)
-                return True
-
+                buf.seek(0)
+                pltstring = base64.b64encode(buf.read())
+                uri = urllib.parse.quote(pltstring)
+                return uri
+                
         return False
 
     def get_context_data(self, **kwargs):
@@ -726,6 +839,34 @@ class LessonTestScoreCreateView(LoginRequiredMixin, generic.CreateView):
         context['view_title'] = self.view_title
 
         return context
+
+
+class OtherStudentsList(LoginRequiredMixin, generic.ListView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/other_students_list.html'
+
+    template_name = 'teachadmin/other_students_list.html'
+    context_object_name = 'other_students'
+
+    def get_queryset(self):
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        homerooms = teacher.homeroom_set.all()
+        subjects = teacher.subject_set.all()
+        all_students = teacher.student_set.all()
+        return all_students.exclude(homeroom__in=homerooms, subject__in=subjects)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        context['teacher'] = teacher
+
+        view_title = "Other students"
+        context['view_title'] = view_title
+
+        
+
+        return context
+    
 
 
 class SchoolListView(LoginRequiredMixin, generic.ListView):
@@ -956,12 +1097,26 @@ class StudentView(generic.ListView):
 
 
 class StudentListView(LoginRequiredMixin, generic.ListView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/student_list.html'
+    
     template_name = 'teachadmin/student_list.html'
-    context_object_name = 'student_list'
+    context_object_name = 'students'
 
     def get_queryset(self):
         teacher = get_object_or_404(Teacher, user=self.request.user)
         return teacher.student_set.all()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        context['teacher'] = teacher
+
+        view_title = "All students"
+        context['view_title'] = view_title
+
+        return context
 
 
 class StudentDetailView(LoginRequiredMixin, generic.DetailView):
@@ -1506,3 +1661,15 @@ def addAssignment(request, student_class_id):
 
     return HttpResponseRedirect(reverse('teachadmin:studentsView',
                                                     args=(studentClass.pk,)))
+
+
+def gender_map(gender):
+    if gender == 'F':
+        print('Female generated')
+        return 'Female'
+    elif gender == 'M':
+        print('Male generated')
+        return 'Male'
+    else:
+        print('Other generated')
+        return 'Other'
