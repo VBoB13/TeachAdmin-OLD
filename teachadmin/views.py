@@ -640,12 +640,15 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
         scoresDF = pd.DataFrame(data=scores, index=index)
         print(scoresDF)
 
+        sns.set_style(style='darkgrid',
+                      rc={
+                          'axes.facecolor': 'grey',
+                          'figure.facecolor': 'black'
+                      })
         fig = plt.figure()
-        sns.set_style(style='darkgrid')
 
         sns.swarmplot(
-            data=scoresDF,
-            palette='deep'
+            data=scoresDF
         )
         axes = fig.gca()
         axes.set_ylim(
@@ -655,6 +658,7 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
         plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
         axes.set_title("{} scores".format(self.object))
+        
         plt.tight_layout()
 
         buf = io.BytesIO()
