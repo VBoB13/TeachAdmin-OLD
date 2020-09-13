@@ -640,16 +640,18 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
         scoresDF = pd.DataFrame(data=scores, index=index)
         print(scoresDF)
 
+        fig = plt.figure()
+
         sns.set_style(style='darkgrid',
                       rc={
-                          'axes.facecolor': 'grey',
+                          'axes.facecolor': 'lightgrey',
                           'figure.facecolor': 'black'
                       })
-        fig = plt.figure()
 
         sns.swarmplot(
             data=scoresDF
         )
+        
         axes = fig.gca()
         axes.set_ylim(
             (scoresDF.min(axis=0, numeric_only=True).min())-3,
@@ -740,7 +742,13 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
 
             # Initiating graph
             fig = plt.figure()
-            sns.set_style(style='darkgrid')
+            sns.set_style(
+                style='darkgrid',
+                rc={
+                    'axes.facecolor': 'lightgrey',
+                    'figure.facecolor': 'black'
+                }
+            )
 
             # Note: Since the seaborn 'swarmplot' wouldn't let me omit either 'x' or 'y' to get the 'hue' shown properly
             # I had to provide 'dummy-data' for the 'x' to make the 'hue' work
@@ -750,7 +758,8 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
                 x=[""]*len(scoresDF),
                 y='{}'.format(self.object.name),
                 hue='Gender',
-                palette='deep'
+                palette='deep',
+                size=7
             )
             axes = fig.gca()
             axes.set_ylim(
@@ -760,6 +769,7 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
             plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
                      rotation_mode="anchor")
             axes.set_title("{} scores".format(self.object))
+            axes.legend(title='Gender', loc='center left', bbox_to_anchor=(1.02, 0.90))
             plt.tight_layout()
 
             # Getting the complete filepath to which we save the graph
@@ -1665,7 +1675,6 @@ def addAssignment(request, student_class_id):
 
     return HttpResponseRedirect(reverse('teachadmin:studentsView',
                                                     args=(studentClass.pk,)))
-
 
 def gender_map(gender):
     if gender == 'F':

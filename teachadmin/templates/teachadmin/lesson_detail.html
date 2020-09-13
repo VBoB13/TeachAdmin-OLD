@@ -11,8 +11,8 @@
 
 {% block content_block %}
     <div class="row">
-        <div class="col-4">
-            <h3>Homeworks</h3>
+        <div class="col-4 col-sm-4">
+            <h3><u>Homeworks:</u></h3>
             {% for homework in lesson.homework_set.all %}
                 {% if forloop.first %}
                     <ul>
@@ -33,22 +33,8 @@
                 </svg>
                 Add homework</a></strong>
             </p>
-        </div>
-        <div class="col-8">
-            <h1 class="display-1">
-                {% if graph %}
-                    <img src="data:image/png;base64,{{ graph }}" alt="{{ lesson|title }} graph" class="img-fluid rounded" />
-                {% else %}
-                    <h1 align="center" class="display-4 text-muted">
-                        Unable to load graph...
-                    </h1>
-                {% endif %}
-            </h1>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-4">
-            <h3>Tests</h3>
+
+            <h3><u>Tests:</u></h3>
             {% for test in lesson.lessontest_set.all %}
                 {% if forloop.first %}
                     <ul>
@@ -69,6 +55,17 @@
                 </svg>
                 Add test</a></strong>
             </p>
+        </div>
+        <div class="col-8 col-sm-8">
+            <h1 class="display-1">
+                {% if graph %}
+                    <img src="data:image/png;base64,{{ graph }}" alt="{{ lesson|title }} graph" class="img-fluid rounded" />
+                {% else %}
+                    <h1 align="center" class="display-4 text-muted">
+                        Unable to load graph...
+                    </h1>
+                {% endif %}
+            </h1>
         </div>
     </div>
 {% endblock content_block %}
