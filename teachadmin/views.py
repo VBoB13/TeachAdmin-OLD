@@ -580,12 +580,12 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
 
             fig = plt.figure()
             sns.set_style(style='darkgrid', rc={
-                'axes.facecolor': 'lightgrey',
-                'figure.facecolor': 'black'
+                'axes.facecolor': 'lightgrey'
             })
+            plt.style.use("dark_background")
             sns.swarmplot(
                 data=scoresDF,
-                palette='deep')
+                palette='bright')
 
             axes = fig.gca()
             axes.set_ylim(
@@ -1425,11 +1425,9 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             for key in studentScores.keys():
                 scoreDict[key].append(max(studentScores[key]))
 
-            print(studentScores)
             index.append(count)
             scoreDict['Student'].append(str(student))
             scoreDict['Gender'].append(student.gender)
-        print(index)
         
         keylist = []
         for key in scoreDict.keys():
@@ -1439,19 +1437,15 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
         for key in keylist:
             scoreDict.pop(key)
 
-        print(scoreDict)
         scoreDF = pd.DataFrame(data=scoreDict, index=index)
         scoreDF['Gender'] = scoreDF['Gender'].apply(gender_map)
-        print(scoreDF)
 
         fig = plt.figure()
-        sns.set_style(style='darkgrid', rc={
-            'axes.facecolor':'lightgrey',
-            'figure.facecolor':'black'
-        })
+        sns.set_style(style='darkgrid')
+        plt.style.use("dark_background")
         sns.swarmplot(
             data=scoreDF,
-            palette='deep')
+            palette='bright')
 
         axes = fig.gca()
         axes.set_ylim(
