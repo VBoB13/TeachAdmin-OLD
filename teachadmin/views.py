@@ -216,7 +216,9 @@ class ExamDetailView(LoginRequiredMixin, generic.DetailView):
             axes.set_title("{} scores".format(self.object))
             plt.tight_layout()
 
-            # To save space on the server, I convert the graph into 64-bit data, convert it back into
+            # To save space on the server, I convert the graph into 64-bit data and
+            # put it into a local memory buffert from which the img-tag reads the data
+            # and displays the graph
             buf = io.BytesIO()
             fig = plt.gcf()
             try:
@@ -1267,6 +1269,143 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'subject'
     template_name = 'teachadmin/subject_detail.html'
 
+    def create_graph(self):
+        students = self.object.student_set.all()
+        
+        exams = self.object.exam_set.all()
+        
+        assignments = self.object.assignment_set.all()
+        
+        lessons = self.object.lesson_set.all()
+        lessontests = LessonTest.objects.filter(lesson__in=lessons)
+        homeworks = Homework.objects.filter(lesson__in=lessons)
+
+        index = []
+        scoreDict = {}
+        scoreDict['Student'] = []
+        scoreDict['Gender'] = []
+
+        for exam in exams:
+            scoreDict['{}({})'.format(exam, exam.pk)] = []
+        for assignment in assignments:
+            scoreDict['{}({})'.format(assignment, assignment.pk)] = []
+        for lessontest in lessontests:
+            scoreDict['{}({})'.format(lessontest, lessontest.pk)] = []
+        for homework in homeworks:
+            scoreDict['{}({})'.format(homework, homework.pk)] = []
+
+        for count, student in enumerate(students):
+            studentScores = {}
+            for exam in exams:
+                if '{}({})'.format(exam, exam.pk) not in studentScores.keys():
+                    studentScores['{}({})'.format(exam, exam.pk)] = []
+                if '{}({})'.format(exam, exam.pk) not in scoreDict.keys():
+                    scoreDict['{}({})'.format(exam, exam.pk)] = []
+                if exam.examscore_set.filter(student=student).count() >=1:
+                    for examscore in exam.examscore_set.filter(student=student):
+                        studentScores['{}({})'.format(exam, exam.pk)].append(
+                            round(((examscore.score/exam.max_score)*100),1)
+                        )
+                else:
+                    studentScores['{}({})'.format(exam, exam.pk)].append(None)
+            
+            for assignment in assignments:
+                if '{}({})'.format(assignment, assignment.pk) not in studentScores.keys():
+                    studentScores['{}({})'.format(assignment, assignment.pk)] = []
+                if '{}({})'.format(assignment, assignment.pk) not in scoreDict.keys():
+                    scoreDict['{}({})'.format(assignment, assignment.pk)] = []
+                if assignment.assignmentscore_set.filter(student=student).count() >= 1:
+                    for assignmentscore in assignment.assignmentscore_set.filter(student=student):
+                        studentScores['{}({})'.format(assignment, assignment.pk)].append(
+                            round(((assignmentscore.score/assignment.max_score)*100),1)
+                        )
+                else:
+                    studentScores['{}({})'.format(assignment, assignment.pk)].append(None)
+
+            for lessontest in lessontests:
+                if '{}({})'.format(lessontest, lessontest.pk) not in studentScores.keys():
+                    studentScores['{}({})'.format(lessontest, lessontest.pk)] = []
+                if '{}({})'.format(lessontest, lessontest.pk) not in scoreDict.keys():
+                    scoreDict['{}({})'.format(lessontest, lessontest.pk)] = []
+                if lessontest.lessontestscore_set.filter(student=student).count() >= 1:
+                    for lessontestscore in lessontest.lessontestscore_set.filter(student=student):
+                        studentScores['{}({})'.format(lessontest, lessontest.pk)].append(
+                            round(((lessontestscore.score/lessontest.max_score)*100), 1)
+                        )
+                else:
+                    studentScores['{}({})'.format(lessontest, lessontest.pk)].append(None)
+            
+
+            for homework in homeworks:
+                if '{}({})'.format(homework, homework.pk) not in studentScores.keys():
+                    studentScores['{}({})'.format(homework, homework.pk)] = []
+                if '{}({})'.format(homework, homework.pk) not in scoreDict.keys():
+                    scoreDict['{}({})'.format(homework, homework.pk)] = []
+                if homework.homeworkscore_set.filter(student=student).count() >= 1:
+                    for homeworkscore in homework.homeworkscore_set.filter(student=student):
+                        studentScores['{}({})'.format(homework, homework.pk)].append(
+                            round(((homeworkscore.score/homework.max_score)*100), 1)
+                        )
+                else:
+                    studentScores['{}({})'.format(homework, homework.pk)].append(None)
+            
+            for key in studentScores.keys():
+                scoreDict[key].append(max(studentScores[key]))
+
+            print(studentScores)
+            index.append(count)
+            scoreDict['Student'].append(str(student))
+            scoreDict['Gender'].append(student.gender)
+        print(index)
+        
+        keylist = []
+        for key in scoreDict.keys():
+            if all(elem == None for elem in scoreDict[key]):
+                keylist.append(key)
+        
+        for key in keylist:
+            scoreDict.pop(key)
+
+        print(scoreDict)
+        scoreDF = pd.DataFrame(data=scoreDict, index=index)
+        scoreDF['Gender'] = scoreDF['Gender'].apply(gender_map)
+        print(scoreDF)
+
+        fig = plt.figure()
+        sns.set_style(style='darkgrid')
+        sns.swarmplot(
+            data=scoreDF,
+            palette='deep')
+
+        axes = fig.gca()
+        axes.set_ylim(
+            (scoreDF.min(axis=0, numeric_only=True).min())-2,
+            (scoreDF.max(axis=0, numeric_only=True).max())+3
+        )
+
+        plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
+                    rotation_mode="anchor")
+        axes.set_title("{} scores".format(self.object))
+        plt.tight_layout()
+
+        # To save space on the server, I convert the graph into 64-bit data and
+        # put it into a local memory buffert from which the img-tag reads the data
+        # and displays the graph
+        buf = io.BytesIO()
+        fig = plt.gcf()
+        try:
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            figstring = base64.b64encode(buf.read())
+            uri = urllib.parse.quote(figstring)
+        except Exception as err:
+            print("Error while processing data for {}".format(self.object))
+            print(err)
+        else:
+            plt.close(fig)
+            return uri
+
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         teacher = get_object_or_404(Teacher, user=self.request.user)
@@ -1279,8 +1418,7 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
 
         context['view_title'] = view_title
 
-        examform = forms.ExamForm()
-        context['examform'] = examform
+        context['graph'] = self.create_graph()
 
         return context
 

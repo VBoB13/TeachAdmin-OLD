@@ -44,7 +44,11 @@
             </p>
         </div>
         <div class="col-8">
-            <h1 class="display-1">Graph here!</h1>
+            {% if graph %}
+                <img src="data:image/png;base64,{{ graph }}" alt="{{ subject|title }} graph" class="img-fluid rounded" />
+            {% else %}
+                <h1 class="display-1 text-muted">Unable to load graph...</h1>
+            {% endif %}
         </div>
     </div>
     <div class="row">
