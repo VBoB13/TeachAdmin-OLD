@@ -48,7 +48,8 @@ class AssignmentDetailView(LoginRequiredMixin, generic.DetailView):
             and creates & stores a graph that is then shown in the view.
             INPUT: None (self) 
             RETURN: Bool """
-        assignmentscores = AssignmentScore.objects.filter(assignment=self.object)
+        students = self.object.subject.student_set.all()
+        assignmentscores = AssignmentScore.objects.filter(assignment=self.object, student__in=students)
         if assignmentscores.count() >= 1:
 
             index = []
@@ -67,7 +68,10 @@ class AssignmentDetailView(LoginRequiredMixin, generic.DetailView):
 
             # Initiating graph
             fig = plt.figure()
-            sns.set_style(style='darkgrid')
+            sns.set_style(style='darkgrid', rc={
+                'axes.facecolor':'lightgrey',
+                'figure.facecolor':'black'
+            })
 
             # Note: Since the seaborn 'swarmplot' wouldn't let me omit either 'x' or 'y' to get the 'hue' shown properly
             # I had to provide 'dummy-data' for the 'x' to make the 'hue' work
@@ -81,28 +85,31 @@ class AssignmentDetailView(LoginRequiredMixin, generic.DetailView):
             )
             axes = fig.gca()
             axes.set_ylim(
-                (scoresDF.min(axis=0, numeric_only=True).min())-3,
-                (scoresDF.max(axis=0, numeric_only=True).max())+5
+                (scoresDF.min(axis=0, numeric_only=True).min())-2,
+                (scoresDF.max(axis=0, numeric_only=True).max())+2
             )
             plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
                      rotation_mode="anchor")
             axes.set_title("{} scores".format(self.object))
+            axes.legend(
+                title='Gender',
+                loc='center left',
+                bbox_to_anchor=(1.02, 0.90))
             plt.tight_layout()
 
-            # Getting the complete filepath to which we save the graph
-            base_dir = getattr(settings, "BASE_DIR", None)
+            buf = io.BytesIO()
+            fig = plt.gcf()
             try:
-                fig_dir = os.path.join(
-                    base_dir, "teachadmin\\media\\teachadmin", "assignments\\")
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                figstring = base64.b64encode(buf.read())
+                uri = urllib.parse.quote(figstring)
             except Exception as err:
-                print("Couldn't join the paths of {} with base_dir".format(self.object))
+                print("Error while processing data for {}".format(self.object))
                 print(err)
             else:
-                print(fig_dir)
-                plt.savefig('{}{}.png'.format(
-                    fig_dir, self.object.pk), format='png')
                 plt.close(fig)
-                return True
+                return uri
 
         return False
         
@@ -112,6 +119,10 @@ class AssignmentDetailView(LoginRequiredMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        students = self.object.subject.student_set.all()
+        assignmentscores = self.object.assignmentscore_set.filter(student__in=students)
+        context['assignmentscores'] = assignmentscores
 
         context['graph'] = self.create_graph()
 
@@ -540,13 +551,79 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
     model = Homework
 
     def create_graph(self):
-        pass
+        students = self.object.lesson.subject.student_set.all()
+        homeworkscores = self.object.homeworkscore_set.filter(student__in=students)
+
+
+        index = []
+        scoresDict = {
+            "Student":[],
+            "Gender":[],
+            "{}".format(self.object):[]
+        }
+        if homeworkscores.count() >= 1:
+            for count, student in enumerate(students):
+                scorelist = []
+                for homeworkscore in homeworkscores.filter(student=student):
+                    scorelist.append(
+                        round(((homeworkscore.score/homeworkscore.homework.max_score)*100),1)
+                    )
+                
+                index.append(count)
+                scoresDict['Student'].append(str(student))
+                scoresDict['Gender'].append(student.gender)
+                scoresDict['{}'.format(self.object)].append(
+                    max(scorelist)
+                )
+            scoresDF = pd.DataFrame(data=scoresDict, index=index)
+            scoresDF['Gender'] = scoresDF['Gender'].apply(gender_map)
+
+            fig = plt.figure()
+            sns.set_style(style='darkgrid', rc={
+                'axes.facecolor': 'lightgrey',
+                'figure.facecolor': 'black'
+            })
+            sns.swarmplot(
+                data=scoresDF,
+                palette='deep')
+
+            axes = fig.gca()
+            axes.set_ylim(
+                (scoresDF.min(axis=0, numeric_only=True).min())-2,
+                (scoresDF.max(axis=0, numeric_only=True).max())+3
+            )
+
+            plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
+                    rotation_mode="anchor")
+            axes.set_title("{} scores".format(self.object))
+            plt.tight_layout()
+
+            # To save space on the server, I convert the graph into 64-bit data and
+            # put it into a local memory buffert from which the img-tag reads the data
+            # and displays the graph
+            buf = io.BytesIO()
+            fig = plt.gcf()
+            try:
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                figstring = base64.b64encode(buf.read())
+                uri = urllib.parse.quote(figstring)
+            except Exception as err:
+                print("Error while processing data for {}".format(self.object))
+                print(err)
+            else:
+                plt.close(fig)
+                return uri
+        else:
+            return False
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
         view_title = "{} ({})".format(self.object, self.object.lesson)
         context['view_title'] = view_title
+
+        context['graph'] = self.create_graph()
 
         return context
 
@@ -882,7 +959,6 @@ class OtherStudentsList(LoginRequiredMixin, generic.ListView):
         
 
         return context
-    
 
 
 class SchoolListView(LoginRequiredMixin, generic.ListView):
@@ -1271,11 +1347,8 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
 
     def create_graph(self):
         students = self.object.student_set.all()
-        
         exams = self.object.exam_set.all()
-        
         assignments = self.object.assignment_set.all()
-        
         lessons = self.object.lesson_set.all()
         lessontests = LessonTest.objects.filter(lesson__in=lessons)
         homeworks = Homework.objects.filter(lesson__in=lessons)
@@ -1372,7 +1445,10 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
         print(scoreDF)
 
         fig = plt.figure()
-        sns.set_style(style='darkgrid')
+        sns.set_style(style='darkgrid', rc={
+            'axes.facecolor':'lightgrey',
+            'figure.facecolor':'black'
+        })
         sns.swarmplot(
             data=scoreDF,
             palette='deep')
@@ -1816,11 +1892,8 @@ def addAssignment(request, student_class_id):
 
 def gender_map(gender):
     if gender == 'F':
-        print('Female generated')
         return 'Female'
     elif gender == 'M':
-        print('Male generated')
         return 'Male'
     else:
-        print('Other generated')
         return 'Other'

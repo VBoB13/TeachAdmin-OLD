@@ -37,9 +37,13 @@
             </p>
         </div>
         <div class="col-8">
-            <h1 class="display-1">
-                Score graph goes here!
-            </h1>
+            {% if graph %}
+                <img src="data:image/png;base64,{{ graph }}" alt="{{ homework|title }} graph" class="img-fluid rounded" />
+            {% else %}
+                <h1 class="display-2 text-muted">
+                    Unable to load graph...
+                </h1>
+            {% endif %}
         </div>
     </div>
 {% endblock content_block %}
