@@ -155,10 +155,14 @@ class Lesson(models.Model):
             })
 
     def has_lessontest(self):
-        if self.lessontest_set.all().count() == 0:
-            return False
-        else:
+        if self.lessontest_set.all().count() >= 1:
             return True
+        return False
+    
+    def has_homework(self):
+        if self.homework_set.all().count() >= 1:
+            return True
+        return False
 
 
 class LessonTest(models.Model):
@@ -186,6 +190,11 @@ class LessonTest(models.Model):
                 "lesson_pk":self.lesson.pk,
                 "pk": self.pk
                 })
+
+    def has_score(self):
+        if self.lessontestscore_set.all().count() == 0:
+            return False
+        return True
     
 
 class Student(models.Model):
@@ -395,6 +404,11 @@ class Homework(models.Model):
             "lesson_pk":self.lesson.pk,
             "pk": self.pk
         })
+
+    def has_score(self):
+        if self.homeworkscore_set.all().count() >= 1:
+            return True
+        return False
 
 
 class HomeworkScore(models.Model):

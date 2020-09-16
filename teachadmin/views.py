@@ -403,16 +403,18 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
             'Student':[],
             'Gender':[]
         }
-        for student in students:
-            if subjects.filter(student).count() >= 1:
-                for subject in subjects.filter(student):
+        for count, student in enumerate(students):
+            add_score = False
+            if subjects.filter(student=student).count() >= 1:
+                for subject in subjects.filter(student=student):
                     if subject.has_exam():
                         for exam in subject.exam_set.all():
                             if '{}({})'.format(exam.name,exam.pk) not in scoresDict.keys():
                                 scoresDict['{}({})'.format(exam.name, exam.pk)] = []
-                            if exam.has_score() or len(exam.examscore_set.filter(student=student)) >= 1:
+                            if exam.has_score() and exam.examscore_set.filter(student=student).count() >= 1:
+                                add_score = True
+                                scorelist = []
                                 for examscore in exam.examscore_set.filter(student=student):
-                                    scorelist = []
                                     scorelist.append(examscore.score)
                                 student_exam_max_score = max(scorelist)
                                 scoresDict['{}({})'.format(exam.name, exam.pk)].append(student_exam_max_score)
@@ -423,9 +425,10 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
                             if '{}({})'.format(assignment.name, assignment.pk) not in scoresDict.keys():
                                 scoresDict['{}({})'.format(
                                     assignment.name, assignment.pk)] = []
-                            if assignment.has_score() or assignment.assignmentscore_set.filter(student=student).count() >= 1:
+                            if assignment.has_score() and assignment.assignmentscore_set.filter(student=student).count() >= 1:
+                                add_score = True
+                                scorelist = []
                                 for assignmentscore in assignment.assignmentscore_set.filter(student=student):
-                                    scorelist = []
                                     scorelist.append(assignmentscore.score)
                                 student_assignment_max_score = max(scorelist)
                                 scoresDict['{}({})'.format(
@@ -435,18 +438,49 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
                                     assignment.name, assignment.pk)].append(None)
                     if subject.has_lesson():
                         for lesson in subject.lesson_set.all():
-                            pass
-                                
+                            if lesson.has_lessontest():
+                                for lessontest in lesson.lessontest_set.all():
+                                    if '{}({})'.format(lessontest.name, lessontest.pk) not in scoresDict.keys():
+                                        scoresDict['{}({})'.format(lessontest.name, lessontest.pk)] = []
+                                    if lessontest.has_score() and lessontest.lessontestscore_set.filter(
+                                        student=student).count() >= 1:
+                                        add_score = True
+                                        scorelist = []
+                                        for lessontestscore in lessontest.lessontestscore_set.filter(student=student):
+                                            scorelist.append(lessontestscore.score)
+                                        student_lessontest_max_score = max(scorelist)
+                                        scoresDict['{}({})'.format(
+                                            lessontest.name, lessontest.pk)].append(student_lessontest_max_score)
+                                    else:
+                                        scoresDict['{}({})'.format(
+                                            lessontest.name, lessontest.pk)].append(None)
+                            if lesson.has_homework():
+                                for homework in lesson.homework_set.all():
+                                    if '{}({})'.format(homework.name, homework.pk) not in scoresDict.keys():
+                                        scoresDict['{}({})'.format(
+                                            homework.name, homework.pk)] = []
+                                    if homework.has_score() and homework.homeworkscore_set.filter(
+                                        student=student).count() >= 1:
+                                        add_score = True
+                                        scorelist = []
+                                        for homeworkscore in homework.homeworkscore_set.filter(student=student):
+                                            scorelist.append(homeworkscore.score)
+                                        student_homework_max_score = max(scorelist)
+                                        scoresDict['{}({})'.format(
+                                            homework.name, homework.pk)].append(student_homework_max_score)
+                                    else:
+                                        scoresDict['{}({})'.format(
+                                            homework.name, homework.pk)].append(None)
+            if add_score:
+                index.append(count)
+                scoresDict['Student'].append(student)
 
-            
-
-
-
-
+        print(scoresDict)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['teacher'] = get_object_or_404(Teacher, user=self.request.user)
+        self.create_graph()
 
         return context
     
@@ -1380,7 +1414,9 @@ class StudentCreateView(LoginRequiredMixin, generic.CreateView):
         teacher = get_object_or_404(Teacher, user=self.request.user)
         
         if self.request.POST.get('selected_homeroom') != "":
-            form.instance.homeroom = self.request.POST.get('selected_homeroom')
+            form.instance.homeroom = HomeRoom.objects.get(
+                pk=self.request.POST.get('selected_homeroom')
+            )
 
         student = form.save()
         teacher.student_set.add(student)
