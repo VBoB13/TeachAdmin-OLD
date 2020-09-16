@@ -10,8 +10,7 @@ from django.contrib.auth.models import User
 
 from django.conf import settings
 
-from .models import (Teacher, School, StudentClass, Student,
-                        StudentClassTest, StudentClassTestScore,
+from .models import (Teacher, School, Student,
                         Assignment, AssignmentScore,
                         HomeRoom, Subject, Exam, ExamScore,
                         Lesson, LessonTest, LessonTestScore,
@@ -395,9 +394,58 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = 'teachadmin/homeroom_detail.html'
     context_object_name = 'homeroom'
 
+    def create_graph(self):
+        students = self.object.student_set.all()
+        subjects = self.object.subject_set.filter(student__in=students)
+
+        index = []
+        scoresDict = {
+            'Student':[],
+            'Gender':[]
+        }
+        for student in students:
+            if subjects.filter(student).count() >= 1:
+                for subject in subjects.filter(student):
+                    if subject.has_exam():
+                        for exam in subject.exam_set.all():
+                            if '{}({})'.format(exam.name,exam.pk) not in scoresDict.keys():
+                                scoresDict['{}({})'.format(exam.name, exam.pk)] = []
+                            if exam.has_score() or len(exam.examscore_set.filter(student=student)) >= 1:
+                                for examscore in exam.examscore_set.filter(student=student):
+                                    scorelist = []
+                                    scorelist.append(examscore.score)
+                                student_exam_max_score = max(scorelist)
+                                scoresDict['{}({})'.format(exam.name, exam.pk)].append(student_exam_max_score)
+                            else:
+                                scoresDict['{}({})'.format(exam.name, exam.pk)].append(None)
+                    if subject.has_assignment():
+                        for assignment in subject.assignment_set.all():
+                            if '{}({})'.format(assignment.name, assignment.pk) not in scoresDict.keys():
+                                scoresDict['{}({})'.format(
+                                    assignment.name, assignment.pk)] = []
+                            if assignment.has_score() or assignment.assignmentscore_set.filter(student=student).count() >= 1:
+                                for assignmentscore in assignment.assignmentscore_set.filter(student=student):
+                                    scorelist = []
+                                    scorelist.append(assignmentscore.score)
+                                student_assignment_max_score = max(scorelist)
+                                scoresDict['{}({})'.format(
+                                    assignment.name, assignment.pk)].append(student_assignment_max_score)
+                            else:
+                                scoresDict['{}({})'.format(
+                                    assignment.name, assignment.pk)].append(None)
+                    if subject.has_lesson():
+                        for lesson in subject.lesson_set.all():
+                            pass
+                                
+
+            
+
+
+
+
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["student_form"] = forms.StudentToHomeRoomForm
         context['teacher'] = get_object_or_404(Teacher, user=self.request.user)
 
         return context
@@ -553,7 +601,6 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
     def create_graph(self):
         students = self.object.lesson.subject.student_set.all()
         homeworkscores = self.object.homeworkscore_set.filter(student__in=students)
-
 
         index = []
         scoresDict = {
@@ -715,31 +762,29 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
             for key in homeworkscoredict.keys():
                 scores[key].append(max(homeworkscoredict[key]))
 
-        print(scores)
         scoresDF = pd.DataFrame(data=scores, index=index)
-        print(scoresDF)
 
         fig = plt.figure()
-
-        sns.set_style(style='darkgrid',
-                      rc={
-                          'axes.facecolor': 'lightgrey',
-                          'figure.facecolor': 'black'
-                      })
-
+        sns.set_style(style='darkgrid')
+        plt.style.use("dark_background")
         sns.swarmplot(
-            data=scoresDF
+            data=scoresDF,
+            palette="bright"
         )
-        
         axes = fig.gca()
         axes.set_ylim(
-            (scoresDF.min(axis=0, numeric_only=True).min())-3,
-            (scoresDF.max(axis=0, numeric_only=True).max())+5
+            (scoresDF.min(axis=0, numeric_only=True).min())-int(
+                (scoresDF.max(axis=0, numeric_only=True).max() -
+                scoresDF.min(axis=0, numeric_only=True).min())*0.1
+            ),
+            (scoresDF.max(axis=0, numeric_only=True).max())+int(
+                (scoresDF.max(axis=0, numeric_only=True).max() -
+                scoresDF.min(axis=0, numeric_only=True).min())*0.1
+            )
         )
         plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
         axes.set_title("{} scores".format(self.object))
-        
         plt.tight_layout()
 
         buf = io.BytesIO()
@@ -1219,7 +1264,7 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'student'
     template_name = 'teachadmin/student_detail.html'
 
-    def get_student_graph(self, currentStudent):
+    def get_student_graph(self):
         all_scores = {}
         all_scores_index = []
         for score in self.test_scores:
@@ -1264,7 +1309,7 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
             rotation_mode="anchor")
         # Last but not least, setting title for the figure and adjusting
         # for small padding spaces (risk of labels or title being cut)
-        axes.set_title("{} Test Data".format(currentStudent))
+        axes.set_title("{} Test Data".format(self.object))
         plt.tight_layout()
 
         # Getting the complete filepath to which we save the graph
@@ -1273,18 +1318,18 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
         fig_dir = os.path.join(static_dir, 'students\\')
 
         file_exists = os.path.exists(
-            fig_dir+'{}.png'.format(currentStudent.pk)
+            fig_dir+'{}.png'.format(self.object.pk)
             )
 
         print(file_exists)
 
         if not file_exists:
             plt.savefig(
-                fig_dir+'{}.png'.format(currentStudent.pk),
+                fig_dir+'{}.png'.format(self.object.pk),
                 format='png')
         else:
             time_in_seconds = os.path.getmtime(
-                fig_dir+'{}.png'.format(currentStudent.pk)
+                fig_dir+'{}.png'.format(self.object.pk)
                 )
             file_date = datetime.fromtimestamp(time_in_seconds)
             right_now = datetime.now()
@@ -1294,7 +1339,7 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
 
             if time_diff.seconds >= (15*60):
                 plt.savefig(
-                    fig_dir+'{}.png'.format(currentStudent.pk),
+                    fig_dir+'{}.png'.format(self.object.pk),
                     format='png')
                 print("\n\nStudent Graph File updated!\n")
 
@@ -1305,21 +1350,55 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        self.test_scores = StudentClassTestScore.objects.filter(
+        self.exam_scores = ExamScore.objects.filter(
             student=self.object
         )
         self.assignment_scores = AssignmentScore.objects.filter(
             student=self.object
         )
-        context['test_scores'] = self.test_scores
+        context['exam_scores'] = self.exam_scores
         context['assignment_scores'] = self.assignment_scores
 
-        if self.test_scores and self.assignment_scores != None:
-            context['file_exists'] = self.get_student_graph(self.object)    
+        if self.exam_scores and self.assignment_scores != None:
+            context['file_exists'] = self.get_student_graph()    
 
         if self.object.subject != None:
             context['subjects'] = self.object.subject.all()
 
+
+        return context
+
+
+class StudentCreateView(LoginRequiredMixin, generic.CreateView):
+    login_url = 'teachadmin/login'
+    redirect_field_name = 'teachadmin/student_detail.html'
+
+    model = Student
+    form_class = forms.StudentForm
+
+    def form_valid(self, form):
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        
+        if self.request.POST.get('selected_homeroom') != "":
+            form.instance.homeroom = self.request.POST.get('selected_homeroom')
+
+        student = form.save()
+        teacher.student_set.add(student)
+
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        self.view_title = 'Add Student'
+        context['view_title'] = self.view_title
+
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        if teacher.has_homeroom():
+            homerooms = teacher.homeroom_set.all()
+            context['homerooms'] = homerooms
+        
+        context['teacher'] = teacher
 
         return context
 
@@ -1448,9 +1527,13 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             palette='bright')
 
         axes = fig.gca()
+        margin = int(
+            (scoreDF.max(axis=0, numeric_only=True).max() -
+             scoreDF.min(axis=0, numeric_only=True).min())*0.1
+        )
         axes.set_ylim(
-            (scoreDF.min(axis=0, numeric_only=True).min())-2,
-            (scoreDF.max(axis=0, numeric_only=True).max())+3
+            (scoreDF.min(axis=0, numeric_only=True).min())-margin,
+            (scoreDF.max(axis=0, numeric_only=True).max())+margin
         )
 
         plt.setp(axes.get_xticklabels(), rotation=45, ha="right",

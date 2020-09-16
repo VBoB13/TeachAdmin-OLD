@@ -4,7 +4,7 @@
 
 {% block view_title_block %}
     <div class="jumbotron bg-secondary">
-        <h1 align="center" class="display-4">{{ homeroom }}<br>({{ homeroom.school }})</h1>
+        <h1 align="center" class="display-4">{{ homeroom }}</h1>
     </div>
 {% endblock view_title_block %}
 
@@ -29,7 +29,7 @@
             <ol>
                 {% for student in homeroom.student_set.all %}
                     <li>
-                        <a href="{% url 'teachadmin:student_detail' student.pk %}"><h5>{{ student }}</h5></a>
+                        <a href="{% url 'teachadmin:student_detail' student.pk %}">{{ student }}</a>
                     </li>
                 {% empty %}
                     <h3 class="text-muted">No students in this homeroom yet...</h3>
@@ -43,7 +43,11 @@
         </strong>
         </div>
         <div class="col-8">
-            <h1 class="display-1">Graph here!</h1>
+            {% if graph %}
+                <img src="data:image/png;base64,{{ graph }}" alt="{{ homeroom|title }} scores" class="img-fluid rounded" />
+            {% else %}
+                <h1 class="display-3 text-muted">Unable to load graph...</h1>
+            {% endif %}
         </div>
     </div>
 {% endblock content_block %}

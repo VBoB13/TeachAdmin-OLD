@@ -19,6 +19,12 @@ class Teacher(models.Model):
 
     def get_absolute_url(self):
         return reverse("teacher_detail", kwargs={"pk": self.pk})
+
+    def has_homeroom(self):
+        if self.homeroom_set.all().count() == 0:
+            return False
+        else:
+            return True
     
 
 class School(models.Model):
@@ -80,6 +86,24 @@ class Subject(models.Model):
     def get_absolute_url(self):
         return reverse("teachadmin:subject_detail", kwargs={"pk": self.pk})
 
+    def has_exam(self):
+        if self.exam_set.all().count() == 0:
+            return False
+        else:
+            return True
+    
+    def has_assignment(self):
+        if self.assignment_set.all().count() == 0:
+            return False
+        else:
+            return True
+    
+    def has_lesson(self):
+        if self.lesson_set.all.count() == 0:
+            return False
+        else:
+            return True
+
 
 class Exam(models.Model):
     name = models.CharField(max_length=100)
@@ -102,6 +126,12 @@ class Exam(models.Model):
     def get_absolute_url(self):
         return reverse("exam_detail", kwargs={"pk": self.pk})
 
+    def has_score(self):
+        if self.examscore_set.all().count() == 0:
+            return False
+        else:
+            return True
+
 
 class Lesson(models.Model):
     name = models.CharField(max_length=100)
@@ -123,6 +153,12 @@ class Lesson(models.Model):
             "pk": self.pk,
             "subject_pk": self.subject.pk
             })
+
+    def has_lessontest(self):
+        if self.lessontest_set.all().count() == 0:
+            return False
+        else:
+            return True
 
 
 class LessonTest(models.Model):
@@ -152,56 +188,20 @@ class LessonTest(models.Model):
                 })
     
 
-###################################################################################
-########################             OLD CODE             #########################
-###################################################################################
-
-
-class StudentClass(models.Model):
-    school = models.ForeignKey(School, on_delete=models.SET_NULL, null=True)
-    teacher = models.ManyToManyField(Teacher)
-    name = models.CharField(max_length=25)
-    grade = models.PositiveSmallIntegerField(default=1)
-
-    class Meta:
-        ordering = ['grade', 'name']
-
-    def get_absolute_url(self):
-        return reverse("studentClass_detail", kwargs={"pk": self.pk})
-
-    def __str__(self):
-        return "{} {}".format(self.grade, self.name)
-
-
-class StudentClassTest(models.Model):
-    studentClass = models.ManyToManyField(StudentClass)
-    name = models.CharField(max_length=25)
-    max_score = models.PositiveSmallIntegerField(default=100)
-    min_score = models.PositiveSmallIntegerField(default=0)
-    date = models.DateField(auto_now_add=True)
-    creator = models.ManyToManyField(Teacher)
-
-    class Meta:
-        ordering = [
-            'name',
-            'date'
-        ]
-
-    def get_absolute_url(self):
-        return reverse("studentClassTest_detail", kwargs={"pk": self.pk})
-
-    def __str__(self):
-        return "{}".format(self.name)
-
-
 class Student(models.Model):
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50, null=True)
-    student_number = models.CharField(max_length=20, null=True, default=None)
+    first_name = models.CharField(max_length=50, help_text="Within 50 characters.")
+    last_name = models.CharField(
+        max_length=50,
+        null=True,
+        help_text="Within 50 characters.")
+    student_number = models.CharField(
+        max_length=20,
+        null=True,
+        default=None,
+        help_text="Within 50 characters.")
     homeroom = models.ForeignKey(HomeRoom, blank=True, null=True, on_delete=models.SET_NULL)
     subject = models.ManyToManyField(Subject)
     teacher = models.ManyToManyField(Teacher)
-    studentClass = models.ManyToManyField(StudentClass)
     
     FEMALE = 'F'
     MALE = 'M'
@@ -215,7 +215,7 @@ class Student(models.Model):
     gender = models.CharField(
         max_length=10,
         choices=GENDERS_CHOICES,
-        default=FEMALE,
+        default=FEMALE
     )
 
     class Meta:
@@ -256,21 +256,11 @@ class Assignment(models.Model):
     def __str__(self):
         return "{}".format(self.name)
 
-
-class StudentClassTestScore(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    test = models.ForeignKey(StudentClassTest, on_delete=models.CASCADE)
-    score = models.PositiveSmallIntegerField()
-
-    class Meta:
-        ordering = ['test','score']
-
-    def get_absolute_url(self):
-        return reverse("studentClassTestScore_detail", kwargs={"pk": self.pk})
-
-    def __str__(self):
-        return "{}: {} ({}%)".format(self.test, self.score,
-            round((self.score/self.test.max_score)*100,1))
+    def has_score(self):
+        if self.assignmentscore_set.all.count() == 0:
+            return False
+        else:
+            return True
 
 
 class AssignmentScore(models.Model):
@@ -288,12 +278,6 @@ class AssignmentScore(models.Model):
         else:
             return "{} ({}%)".format(self.score,
                 round((self.score/self.assignment.max_score)*100,1))
-
-
-
-###################################################################################
-########################             NEW CODE             #########################
-###################################################################################
 
 
 class ExamScore(models.Model):

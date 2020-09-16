@@ -1,7 +1,6 @@
 from django.contrib import admin
 
-from .models import (Teacher, School, StudentClass, Student,
-                        StudentClassTest, StudentClassTestScore,
+from .models import (Teacher, School, Student,
                         Assignment, AssignmentScore,
                         HomeRoom, Subject, Exam, ExamScore,
                         Lesson, LessonTest, LessonTestScore,
@@ -10,14 +9,9 @@ from .models import (Teacher, School, StudentClass, Student,
 
 # Register your models here.
 admin.site.register(School)
-admin.site.register(StudentClass)
 admin.site.register(Student)
-admin.site.register(StudentClassTest)
-admin.site.register(StudentClassTestScore)
 admin.site.register(Assignment)
 admin.site.register(AssignmentScore)
-
-# NEW Models here
 admin.site.register(Teacher)
 admin.site.register(HomeRoom)
 admin.site.register(Subject)

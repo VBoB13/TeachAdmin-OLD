@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import (Teacher, School, Student, StudentClass, 
-                    StudentClassTest, Assignment, HomeRoom,
+from .models import (Teacher, School, Student, 
+                    Assignment, HomeRoom,
                     Subject, Exam, ExamScore,
                     Lesson, LessonTest, LessonTestScore,
                     BehaviorType, BehaviorEvent,
@@ -30,25 +30,13 @@ class SchoolForm(forms.ModelForm):
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = ['first_name', 'gender', 'homeroom',
-                  'student_number', ]
+        exclude = ['homeroom', 'subject', 'teacher']
+
 
 class StudentToHomeRoomForm(forms.ModelForm):
     class Meta:
         model = Student
         fields = ['first_name', 'gender']
-
-
-class StudentClassForm(forms.ModelForm):
-    class Meta:
-        model = StudentClass
-        fields = ['school', 'name', 'grade']
-
-
-class StudentClassTestForm(forms.ModelForm):
-    class Meta:
-        model = StudentClassTest
-        fields = ['name', 'min_score', 'max_score']
 
 
 class AssignmentForm(forms.ModelForm):
