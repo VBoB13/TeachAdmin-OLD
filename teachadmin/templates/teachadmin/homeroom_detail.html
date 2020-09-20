@@ -11,42 +11,64 @@
 {% block content_block %}
     <div class="row">
         <div class="col-4">
-        <h3><u>Homeroom info:</u></h3>
-        <p>
-            <strong>School: </strong>{{ homeroom.school }}
-        </p>
-        <p>
-            <strong>Grade: </strong>{{ homeroom.grade }}
-        </p>
-        <p>
-            <strong>Teacher(s): </strong>
-            {% for teacher in homeroom.teacher.all %}
-                {% if forloop.first %}{{ teacher }}{% endif %}
-                {% if forloop.counter >= 2 %}, {{ teacher }}{% endif %}
-            {% endfor %}
-        </p>
-        <h3><u>Students:</u></h3>       
-            <ol>
-                {% for student in homeroom.student_set.all %}
-                    <li>
-                        <a href="{% url 'teachadmin:student_detail' student.pk %}">{{ student }}</a>
-                    </li>
-                {% empty %}
-                    <h3 class="text-muted">No students in this homeroom yet...</h3>
+            <h3><u>Homeroom info:</u></h3>
+            <p>
+                <strong>School: </strong>{{ homeroom.school }}
+            </p>
+            <p>
+                <strong>Grade: </strong>{{ homeroom.grade }}
+            </p>
+            <p>
+                <strong>Teacher(s): </strong>
+                {% for teacher in homeroom.teacher.all %}
+                    {% if forloop.first %}{{ teacher }}{% endif %}
+                    {% if forloop.counter >= 2 %}, {{ teacher }}{% endif %}
                 {% endfor %}
-            </ol>
-            <strong><a href="{% url 'teachadmin:homeroom_update' homeroom.pk %}">
+            </p>
+            <h5 style="margin-top:10px"><u>Subjects:</u></h5>
+            {% for subject in homeroom.subject_set.all %}
+                {% if forloop.first %}
+                    <div style="margin:10px" class="list-group"> 
+                {% endif %}
+                <a href="{% url 'teachadmin:subject_detail' subject.pk %}" class="list-group-item list-group-item-primary list-group-item-action">
+                        <strong>{{ subject }}</strong>
+                </a>
+                {% if forloop.last %}
+                    </div>
+                {% endif %}
+            {% empty %}
+                <p>
+                    <strong style="margin-left:10px" class="text-muted">No subjects assigned to this homeroom yet.</strong>
+                </p>
+            {% endfor %}
+            <p><strong><a href="{% url 'teachadmin:homeroom_update' homeroom.pk subject %}">
             <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
             </svg>
-            Add students</a>
-        </strong>
+            Add subjects</a></strong></p>
+            <h5><u>Students:</u></h5>       
+                <div style="margin:10px" class="list-group">
+                    {% for student in homeroom.student_set.all %}
+                        <a href="{% url 'teachadmin:student_detail' student.pk %}" 
+                        class="list-group-item list-group-item-action list-group-item-dark">
+                            <strong>{{ student }}</strong>
+                        </a>
+                    {% empty %}
+                        <h3 class="text-muted">No students in this homeroom yet...</h3>
+                    {% endfor %}
+                </div>
+            <strong><a href="{% url 'teachadmin:homeroom_update' homeroom.pk %}">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
+                </svg>
+                Add students</a>
+            </strong>
         </div>
         <div class="col-8">
             {% if graph %}
                 <img src="data:image/png;base64,{{ graph }}" alt="{{ homeroom|title }} scores" class="img-fluid rounded" />
             {% else %}
-                <h1 class="display-3 text-muted">Unable to load graph...</h1>
+                <h1 class="display-4 text-muted text-break">No scores under {{ homeroom }}'s subjects to load.</h1>
             {% endif %}
         </div>
     </div>

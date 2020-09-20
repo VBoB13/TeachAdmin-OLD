@@ -2,6 +2,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
 from django.views import generic, View
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -480,6 +481,7 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['teacher'] = get_object_or_404(Teacher, user=self.request.user)
+        context['subject'] = True
         self.create_graph()
 
         return context
@@ -553,16 +555,28 @@ class HomeRoomUpdateView(LoginRequiredMixin, generic.UpdateView):
     model = HomeRoom
     context_object_name = 'homeroom'
 
+    def dispatch(self, request, *args, **kwargs):
+        if kwargs.get('subject'):
+            self.form_class = forms.HomeRoomAddSubjectForm
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         homeroom = form.save()
-
-        students = Student.objects.filter(pk__in=self.request.POST.getlist('selected_students'))
-        if students.count() >= 1:
-            for student in students:
-                if student.homeroom != homeroom:
-                    student.homeroom = homeroom
-                    student.save()
-
+        if self.form_class == forms.HomeRoomAddSubjectForm:
+            for subject in Subject.objects.filter(pk__in=self.request.POST.getlist('selected_subjects')):
+                homeroom.subject_set.add(subject)
+                if homeroom.has_students():
+                    for student in homeroom.student_set.all():
+                        subject.student_set.add(student)
+        else:
+            students = Student.objects.filter(pk__in=self.request.POST.getlist('selected_students'))
+            if students.count() >= 1:
+                for student in students:
+                    if student.homeroom == None:
+                        student.homeroom = homeroom
+                        student.save()
+                    else:
+                        print("Student ({}) already has a homeroom.".format(student))
 
         return super().form_valid(form)
     
@@ -574,6 +588,9 @@ class HomeRoomUpdateView(LoginRequiredMixin, generic.UpdateView):
 
         teacher = get_object_or_404(Teacher, user=self.request.user)
         context['teacher'] = teacher
+        if self.form_class == forms.HomeRoomAddSubjectForm:
+            context['subject'] = self.kwargs.get('subject')
+            
         
         available_students = Student.objects.filter(teacher=teacher)
         context['available_students'] = available_students
@@ -649,13 +666,14 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
                     scorelist.append(
                         round(((homeworkscore.score/homeworkscore.homework.max_score)*100),1)
                     )
-                
-                index.append(count)
-                scoresDict['Student'].append(str(student))
-                scoresDict['Gender'].append(student.gender)
-                scoresDict['{}'.format(self.object)].append(
-                    max(scorelist)
-                )
+                if len(scorelist) >= 1:
+                    index.append(count)
+                    scoresDict['Student'].append(str(student))
+                    scoresDict['Gender'].append(student.gender)
+                    scoresDict['{}'.format(self.object)].append(
+                        max(scorelist)
+                    )
+
             scoresDF = pd.DataFrame(data=scoresDict, index=index)
             scoresDF['Gender'] = scoresDF['Gender'].apply(gender_map)
 
@@ -768,10 +786,8 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
         testscores = {}
         homeworkscoredict = {}
         
-        for studentcount, student in enumerate(students):
-            index.append(studentcount)
-            scores['Student'].append(str(student))
-
+        for count, student in enumerate(students):
+            add_score = False
             for lessontestscore in lessontestscores.filter(student=student):
                 if '{}({})'.format(lessontestscore.lessonTest, lessontestscore.lessonTest.pk) not in scores.keys():
                     scores['{}({})'.format(lessontestscore.lessonTest, lessontestscore.lessonTest.pk)] = []
@@ -782,6 +798,7 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
             
             for key in testscores.keys():
                 scores[key].append(max(testscores[key]))
+                add_score = True
 
             for homeworkscore in homeworkscores.filter(student=student):
                 if '{}({})'.format(homeworkscore.homework, homeworkscore.homework.pk) not in scores.keys():
@@ -795,8 +812,18 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
 
             for key in homeworkscoredict.keys():
                 scores[key].append(max(homeworkscoredict[key]))
+                add_score = True
 
+            if add_score:
+                index.append(count)
+                scores['Student'].append(str(student))
+
+        print(scores)
         scoresDF = pd.DataFrame(data=scores, index=index)
+        checkDF = scoresDF.iloc[:,1:]
+
+        if checkDF.empty:
+            return False
 
         fig = plt.figure()
         sns.set_style(style='darkgrid')
@@ -931,7 +958,6 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
             plt.tight_layout()
 
             # Getting the complete filepath to which we save the graph
-            base_dir = getattr(settings, "BASE_DIR", None)
             buf = io.BytesIO()
             try:
                 plt.savefig(buf, format='png')
@@ -979,6 +1005,24 @@ class LessonTestCreateView(LoginRequiredMixin, generic.CreateView):
         context['view_title'] = self.view_title
 
         return context
+
+
+class LessonTestScoreDetailView(LoginRequiredMixin, generic.DetailView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/lessontest_detail.html'
+
+    template_name = 'teachadmin/lessontestscore_detail.html'
+    context_object_name = 'lessontestscore'
+    model = LessonTestScore
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["view_title"] = "{}: {}({} points)".format(
+            self.object.student,
+            self.object.lessonTest,
+            self.object.score)
+        return context
+    
 
 
 class LessonTestScoreCreateView(LoginRequiredMixin, generic.CreateView):
@@ -1298,16 +1342,18 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'student'
     template_name = 'teachadmin/student_detail.html'
 
+
+    # Re-write this method
     def get_student_graph(self):
         all_scores = {}
         all_scores_index = []
-        for score in self.test_scores:
-            test_title = score.test.name[:-2]
-            if '1' in score.test.name:
-                all_scores[test_title] = []
+        for score in self.exam_scores:
+            exam_title = score.exam.name[:-2]
+            if '1' in score.exam.name:
+                all_scores[exam_title] = []
 
-            all_scores[test_title].append(int((
-                score.score/score.test.max_score
+            all_scores[exam_title].append(int((
+                score.score/score.exam.max_score
                 )*100))
 
         print(all_scores)
@@ -1393,8 +1439,10 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
         context['exam_scores'] = self.exam_scores
         context['assignment_scores'] = self.assignment_scores
 
-        if self.exam_scores and self.assignment_scores != None:
-            context['file_exists'] = self.get_student_graph()    
+        if self.exam_scores.count() > 0 and self.assignment_scores.count() > 0:
+            pass
+            # Re-write the method
+            #context['file_exists'] = self.get_student_graph()    
 
         if self.object.subject != None:
             context['subjects'] = self.object.subject.all()
@@ -1487,8 +1535,6 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             for exam in exams:
                 if '{}({})'.format(exam, exam.pk) not in studentScores.keys():
                     studentScores['{}({})'.format(exam, exam.pk)] = []
-                if '{}({})'.format(exam, exam.pk) not in scoreDict.keys():
-                    scoreDict['{}({})'.format(exam, exam.pk)] = []
                 if exam.examscore_set.filter(student=student).count() >=1:
                     for examscore in exam.examscore_set.filter(student=student):
                         studentScores['{}({})'.format(exam, exam.pk)].append(
@@ -1500,8 +1546,6 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             for assignment in assignments:
                 if '{}({})'.format(assignment, assignment.pk) not in studentScores.keys():
                     studentScores['{}({})'.format(assignment, assignment.pk)] = []
-                if '{}({})'.format(assignment, assignment.pk) not in scoreDict.keys():
-                    scoreDict['{}({})'.format(assignment, assignment.pk)] = []
                 if assignment.assignmentscore_set.filter(student=student).count() >= 1:
                     for assignmentscore in assignment.assignmentscore_set.filter(student=student):
                         studentScores['{}({})'.format(assignment, assignment.pk)].append(
@@ -1513,8 +1557,6 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             for lessontest in lessontests:
                 if '{}({})'.format(lessontest, lessontest.pk) not in studentScores.keys():
                     studentScores['{}({})'.format(lessontest, lessontest.pk)] = []
-                if '{}({})'.format(lessontest, lessontest.pk) not in scoreDict.keys():
-                    scoreDict['{}({})'.format(lessontest, lessontest.pk)] = []
                 if lessontest.lessontestscore_set.filter(student=student).count() >= 1:
                     for lessontestscore in lessontest.lessontestscore_set.filter(student=student):
                         studentScores['{}({})'.format(lessontest, lessontest.pk)].append(
@@ -1522,13 +1564,10 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
                         )
                 else:
                     studentScores['{}({})'.format(lessontest, lessontest.pk)].append(None)
-            
 
             for homework in homeworks:
                 if '{}({})'.format(homework, homework.pk) not in studentScores.keys():
                     studentScores['{}({})'.format(homework, homework.pk)] = []
-                if '{}({})'.format(homework, homework.pk) not in scoreDict.keys():
-                    scoreDict['{}({})'.format(homework, homework.pk)] = []
                 if homework.homeworkscore_set.filter(student=student).count() >= 1:
                     for homeworkscore in homework.homeworkscore_set.filter(student=student):
                         studentScores['{}({})'.format(homework, homework.pk)].append(
@@ -1553,46 +1592,51 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             scoreDict.pop(key)
 
         scoreDF = pd.DataFrame(data=scoreDict, index=index)
-        scoreDF['Gender'] = scoreDF['Gender'].apply(gender_map)
+        checkDF = scoreDF.iloc[:,2:]
 
-        fig = plt.figure()
-        sns.set_style(style='darkgrid')
-        plt.style.use("dark_background")
-        sns.swarmplot(
-            data=scoreDF,
-            palette='bright')
+        if checkDF.empty == False:
+            scoreDF['Gender'] = scoreDF['Gender'].apply(gender_map)
 
-        axes = fig.gca()
-        margin = int(
-            (scoreDF.max(axis=0, numeric_only=True).max() -
-             scoreDF.min(axis=0, numeric_only=True).min())*0.1
-        )
-        axes.set_ylim(
-            (scoreDF.min(axis=0, numeric_only=True).min())-margin,
-            (scoreDF.max(axis=0, numeric_only=True).max())+margin
-        )
+            fig = plt.figure()
+            sns.set_style(style='darkgrid')
+            plt.style.use("dark_background")
+            sns.swarmplot(
+                data=scoreDF,
+                palette='bright')
 
-        plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
-                    rotation_mode="anchor")
-        axes.set_title("{} scores".format(self.object))
-        plt.tight_layout()
+            axes = fig.gca()
+            margin = int(
+                (scoreDF.max(axis=0, numeric_only=True).max() -
+                scoreDF.min(axis=0, numeric_only=True).min())*0.1
+            )
+            axes.set_ylim(
+                (scoreDF.min(axis=0, numeric_only=True).min())-margin,
+                (scoreDF.max(axis=0, numeric_only=True).max())+margin
+            )
 
-        # To save space on the server, I convert the graph into 64-bit data and
-        # put it into a local memory buffert from which the img-tag reads the data
-        # and displays the graph
-        buf = io.BytesIO()
-        fig = plt.gcf()
-        try:
-            plt.savefig(buf, format='png')
-            buf.seek(0)
-            figstring = base64.b64encode(buf.read())
-            uri = urllib.parse.quote(figstring)
-        except Exception as err:
-            print("Error while processing data for {}".format(self.object))
-            print(err)
+            plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
+                        rotation_mode="anchor")
+            axes.set_title("{} scores".format(self.object))
+            plt.tight_layout()
+
+            # To save space on the server, I convert the graph into 64-bit data and
+            # put it into a local memory buffert from which the img-tag reads the data
+            # and displays the graph
+            buf = io.BytesIO()
+            fig = plt.gcf()
+            try:
+                plt.savefig(buf, format='png')
+                buf.seek(0)
+                figstring = base64.b64encode(buf.read())
+                uri = urllib.parse.quote(figstring)
+            except Exception as err:
+                print("Error while processing data for {}".format(self.object))
+                print(err)
+            else:
+                plt.close(fig)
+                return uri
         else:
-            plt.close(fig)
-            return uri
+            return False
 
 
     def get_context_data(self, **kwargs):

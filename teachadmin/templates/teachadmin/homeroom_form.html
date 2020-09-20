@@ -15,30 +15,47 @@
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% bootstrap_form form %}
+                {% if subject %}
+                    <p>
+                    <select name="selected_subjects" class='form-control' multiple>
+                    {% for subject in teacher.subject_set.all %}
+                        <option value="{{ subject.pk }}" 
+                        {% if subject in homeroom.subject_set.all %}
+                            selected>{{ subject }}</option>
+                        {% else %}
+                            >{{ subject }}</option>
+                        {% endif %}
+                    {% endfor %}
+                    </select>
+                    </p>
+                {% else %}
+                    <p>
+                        <input type="file" name="homeroomfile" class="form-control-file">
+                        <small class="form-text text-muted">CSV-files (.csv) only</small>
+                    </p>
+                {% endif %}
                 <p>
-                    <input type="file" name="homeroomfile">
-                    <small class="form-text text-muted">CSV-files (.csv) only</small>
-                </p>
-                <p>
-                    <input type="submit" value="Create" class="btn btn-primary">
+                    <input type="submit" value="{% if form.instance %}Update{% else %}Create{% endif %}" class="btn btn-primary">
                 </p>
             </form>
         </div>
         <div class="col-4">
-            <h3><u>Info:</u></h3>
-            <p class="text-justify" style="margin-top:20px">
-                <strong><a href="{% static 'teachadmin/homerooms/csv templates/students-template.csv' %}">
-                <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-file-earmark-spreadsheet-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M2 2a2 2 0 0 1 2-2h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm7 2l.5-2.5 3 3L10 5a1 1 0 0 1-1-1zM3 9v1h2v2H3v1h2v2h1v-2h3v2h1v-2h3v-1h-3v-2h3V9H3zm3 3v-2h3v2H6z"/>
-                </svg>
-                Sample file</a></strong>
-            </p>
-            <p class="text-justify">
-                Using a file to fill data can be convenient, but it has to be done in a specific way to be able to be processed.
-                I wish I was the master-of-coding and was able to make anything work, but the truth is that I only know so much.
-                Meanwhile, please try to follow <a href=""><strong>this format</strong></a> when creating your file (.csv).<br>
-                If that's too vague of a show case, please read <strong><a href="">this guide</a></strong> for more information.
-            </p>
+            {% if not subject %}
+                <h3><u>Info:</u></h3>
+                <p class="text-justify" style="margin-top:20px">
+                    <strong><a href="{% static 'teachadmin/homerooms/csv templates/students-template.csv' %}">
+                    <svg width="1.5em" height="1.5em" viewBox="0 0 16 16" class="bi bi-file-earmark-spreadsheet-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M2 2a2 2 0 0 1 2-2h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm7 2l.5-2.5 3 3L10 5a1 1 0 0 1-1-1zM3 9v1h2v2H3v1h2v2h1v-2h3v2h1v-2h3v-1h-3v-2h3V9H3zm3 3v-2h3v2H6z"/>
+                    </svg>
+                    Sample file</a></strong>
+                </p>
+                <p class="text-justify">
+                    Using a file to fill data can be convenient, but it has to be done in a specific way to be able to be processed.
+                    I wish I was the master-of-coding and was able to make anything work, but the truth is that I only know so much.
+                    Meanwhile, please try to follow <a href=""><strong>this format</strong></a> when creating your file (.csv).<br>
+                    If that's too vague of a show case, please read <strong><a href="">this guide</a></strong> for more information.
+                </p>
+            {% endif %}
         </div>
     </div>
 {% endblock content_block %}

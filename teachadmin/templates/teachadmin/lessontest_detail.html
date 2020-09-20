@@ -25,7 +25,7 @@
                     <ul>
                 {% endif %}
                 
-                <li>{{ score.student }} - {{ score }}</li>
+                <li>{{ score.student }} - <a href="{% url 'teachadmin:lessontestscore_detail' score.lessonTest.lesson.subject.pk score.lessonTest.lesson.pk score.lessonTest.pk score.pk %}">{{ score }}</a></li>
 
                 {% if forloop.last %}
                     </ul>

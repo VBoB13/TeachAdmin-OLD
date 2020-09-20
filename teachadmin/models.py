@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from django_countries.fields import CountryField
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -66,6 +68,16 @@ class HomeRoom(models.Model):
 
     def get_absolute_url(self):
         return reverse("teachadmin:homeroom_detail", kwargs={"pk": self.pk})
+
+    def has_students(self):
+        if self.student_set.all().count() >= 1:
+            return True
+        return False
+
+    def has_subject(self):
+        if self.subject_set.all().count() >= 1:
+            return True
+        return False
     
 
 class Subject(models.Model):
@@ -99,7 +111,7 @@ class Subject(models.Model):
             return True
     
     def has_lesson(self):
-        if self.lesson_set.all.count() == 0:
+        if self.lesson_set.all().count() == 0:
             return False
         else:
             return True
@@ -433,6 +445,12 @@ class HomeworkScore(models.Model):
                             "lesson_pk": self.homework.lesson.pk,
                             "pk": self.homework.pk
                             })
+
+    def clean(self):
+        if self.score > self.homework.max_score:
+            raise ValidationError(_("Score cannot be higher than the Homework's max score. (%(score)s > %(max_score)s)"),
+                                  params={'score': self.score, 'max_score': self.homework.max_score})
+            
     
-    
+
     

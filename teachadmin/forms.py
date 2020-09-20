@@ -51,6 +51,12 @@ class HomeRoomForm(forms.ModelForm):
         exclude = ('teacher', 'created_by')
 
 
+class HomeRoomAddSubjectForm(forms.ModelForm):
+    class Meta:
+        model = HomeRoom
+        fields = ('name',)
+
+
 class HomeworkForm(forms.ModelForm):
     class Meta:
         model = Homework
