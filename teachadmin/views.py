@@ -943,6 +943,36 @@ class LessonCreateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
+class LessonUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/lesson_form.html'
+
+    form_class = forms.LessonForm
+    model = Lesson
+    context_object_name = 'lesson'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Update {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+
+class LessonDeleteView(LoginRequiredMixin, generic.DeleteView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/lesson_form.html'
+
+    model = Lesson
+    success_url = reverse_lazy('teachadmin:subject_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Delete {}?".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+
+
 class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
     login_url = 'teachadmin/login/'
     redirect_field_name = 'teachadmin/lessontest_detail.html'
