@@ -56,6 +56,7 @@ urlpatterns = [
     path('subjects/<int:subject_pk>/lessons/<int:lesson_pk>/tests/<int:lessontest_pk>/testscores/<int:pk>/', views.LessonTestScoreDetailView.as_view(), name='lessontestscore_detail'),
     path('subjects/<int:subject_pk>/assignments/<int:pk>/', views.AssignmentDetailView.as_view(), name='assignment_detail'),
     path('subjects/<int:subject_pk>/assignments/new/', views.AssignmentCreateView.as_view(), name='subject_add_assignment'),
-    path('subjects/<int:subject_pk>/assignments/delete/<int:pk>/', views.AssignmentDeleteView.as_view(), name='assignment_delete'),
+    path('subjects/<int:subject_pk>/assignments/<int:pk>/update/', views.AssignmentUpdateView.as_view(), name='assignment_update'),
+    path('subjects/<int:subject_pk>/assignments/<int:pk>/delete/', views.AssignmentDeleteView.as_view(), name='assignment_delete'),
     path('teacher/<int:pk>/', views.TeacherDetailView.as_view(), name='teacher'),
 ]

@@ -165,6 +165,21 @@ class AssignmentCreateView(LoginRequiredMixin, generic.CreateView):
         return super().form_valid(form)
 
 
+class AssignmentUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/assignment_detail.html'
+
+    form_class = forms.AssignmentForm
+    model = Assignment
+    context_object_name = 'assignment'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Update {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+
 class ExamListView(LoginRequiredMixin, generic.ListView):
     login_url = 'teachadmin/login/'
     redirect_field_name = 'teachadmin/index.html'
@@ -304,9 +319,8 @@ class ExamDeleteView(LoginRequiredMixin, generic.DeleteView):
         
         view_title = "Delete {}".format(self.object)
         context["view_title"] = view_title
-        
+
         return context
-    
 
 
 class ExamUpdateView(LoginRequiredMixin, generic.UpdateView):

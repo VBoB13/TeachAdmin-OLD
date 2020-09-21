@@ -13,6 +13,6 @@
     <form method="POST">
         {% csrf_token %}
         {% bootstrap_form form %}
-        <input type="submit" value="Add assignment" class="btn btn-primary" />
+        <input type="submit" value="{% if form.instance.pk %}Update{% else %}Create{% endif %} assignment" class="btn btn-primary" />
     </form>
 {% endblock content_block %}

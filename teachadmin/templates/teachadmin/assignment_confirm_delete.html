@@ -12,7 +12,7 @@
         {% csrf_token %}
         Are you sure you want to delete <strong>{{ object }}</strong> ?
         <p>
-            <input class="btn btn-link" type="button" value="Cancel" onclick="window.history.go(-1);"/>
+            <input class="btn btn-secondary" type="button" value="Cancel" onclick="window.history.go(-1);"/>
             <input type="submit" value="Delete" class="btn btn-danger">
         </p>
     </form>

@@ -13,6 +13,7 @@
     <form method="POST">
         {% csrf_token %}
         <p>Are you sure you want to delete <strong>{{ object }}</strong> ?</p>
+        <input class="btn btn-secondary" type="button" value="Cancel" onclick="window.history.go(-1);"/>
         <input type="submit" value="Confirm" class="btn btn-danger">
     </form>
 {% endblock content_block %}
