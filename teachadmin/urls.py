@@ -22,6 +22,7 @@ urlpatterns = [
     path('schools/new/', views.SchoolCreateView.as_view(), name='new_school'),
     path('schools/<int:pk>/', views.SchoolDetailView.as_view(), name='school_detail'),
     path('schools/<int:pk>/delete/', views.SchoolDeleteView.as_view(), name='school_delete'),
+    path('schools/<int:pk>/update/', views.SchoolUpdateView.as_view(), name='school_update'),
     path('schools/<int:school_pk>/homerooms/new/', views.HomeRoomCreateView.as_view(), name='school_add_homeroom'),
     path('student/all/', views.StudentListView.as_view(), name='student_list'),
     path('student/<int:pk>/', views.StudentDetailView.as_view(), name='student_detail'),

@@ -46,7 +46,7 @@ class School(models.Model):
         return self.name
     
     def get_absolute_url(self):
-        reverse("teachadmin:school_detail", kwargs={"pk":self.pk})
+        return reverse("teachadmin:school_detail", kwargs={"pk":self.pk})
 
 
 class HomeRoom(models.Model):

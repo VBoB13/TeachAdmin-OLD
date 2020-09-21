@@ -1024,7 +1024,6 @@ class LessonTestScoreDetailView(LoginRequiredMixin, generic.DetailView):
         return context
     
 
-
 class LessonTestScoreCreateView(LoginRequiredMixin, generic.CreateView):
     login_url = 'teachadmin/login/'
     redirect_field_name = 'teachadmin/lessontestscore_detail.html'
@@ -1111,6 +1110,21 @@ class SchoolCreateView(LoginRequiredMixin, generic.CreateView):
 
     model = School
     form_class = forms.SchoolForm
+
+    def form_valid(self, form):
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        school = form.save()
+        teacher.school_set.add(school)
+        return super().form_valid(form)
+
+
+class SchoolUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/school_detail.html'
+
+    form_class = forms.SchoolForm
+    model = School
+    context_object_name = 'school'
 
 
 class SchoolDeleteView(LoginRequiredMixin, generic.DeleteView):

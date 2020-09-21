@@ -24,7 +24,7 @@ class TeacherForm(forms.ModelForm):
 class SchoolForm(forms.ModelForm):
     class Meta:
         model = School
-        fields = ('name', 'address')
+        exclude = ['teacher',]
 
 
 class StudentForm(forms.ModelForm):

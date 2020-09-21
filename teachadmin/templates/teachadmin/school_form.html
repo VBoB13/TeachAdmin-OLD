@@ -17,7 +17,7 @@
     <form method="POST">
         {% csrf_token %}
         {% bootstrap_form form %}
-        <input type="submit" class="btn btn-primary" name="" value="Add school">
+        <input type="submit" class="btn btn-primary" name="" value="{% if form.instance.pk %}Update{% else %}Create{% endif %} School">
     </form>
 {% endblock content_block %}
 
