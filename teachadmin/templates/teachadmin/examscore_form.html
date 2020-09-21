@@ -22,12 +22,12 @@
                 {% csrf_token %}
                 {% bootstrap_form form %}
                 <label for="subject_students">Student</label><br>
-                <select name="student" id="subject_students">
+                <select name="student" id="subject_students" class="form-control">
                     {% for student in subject.student_set.all %}
                         <option value="{{ student.pk }}">{{ student }}</option>
                     {% endfor %}
                 </select><br><br>
-                <input type="submit" value="Add score">
+                <input type="submit" value="Add score" class="btn btn-primary">
             </form>
         </div>
     </div>

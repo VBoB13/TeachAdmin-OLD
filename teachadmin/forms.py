@@ -84,7 +84,7 @@ class SubjectToStudentForm(forms.ModelForm):
 class ExamForm(forms.ModelForm):
     class Meta:
         model = Exam
-        fields = ['name', 'date', 'min_score', 'max_score']
+        exclude = ['subject',]
 
 
 class ExamScoreForm(forms.ModelForm):

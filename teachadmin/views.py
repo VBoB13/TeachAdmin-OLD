@@ -209,6 +209,7 @@ class ExamDetailView(LoginRequiredMixin, generic.DetailView):
 
             fig = plt.figure()
             sns.set_style(style='darkgrid')
+            plt.style.use("dark_background")
             sns.swarmplot(
                 data=scoresDF,
                 x=[""]*len(scoresDF),
@@ -290,6 +291,37 @@ class ExamCreateView(LoginRequiredMixin, generic.CreateView):
         form.save()
         return super().form_valid(form)
 
+
+class ExamDeleteView(LoginRequiredMixin, generic.DeleteView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/subject_list.html'
+
+    model = Exam
+    success_url = reverse_lazy('teachadmin:subject_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        view_title = "Delete {}".format(self.object)
+        context["view_title"] = view_title
+        
+        return context
+    
+
+
+class ExamUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/exam_form.html'
+
+    form_class = forms.ExamForm
+    model = Exam
+    context_object_name = 'exam'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["view_title"] = "Update {}".format(self.object)
+        return context
+    
 
 class ExamScoreDetailView(LoginRequiredMixin, generic.DetailView):
     login_url = 'teachadmin/login/'

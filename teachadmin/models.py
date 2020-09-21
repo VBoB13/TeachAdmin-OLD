@@ -118,11 +118,11 @@ class Subject(models.Model):
 
 
 class Exam(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, help_text="Anything within 100 characters.")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     
-    max_score = models.PositiveSmallIntegerField(default=100)
-    min_score = models.PositiveSmallIntegerField(default=0)
+    max_score = models.PositiveSmallIntegerField(default=100, help_text="Default: 100")
+    min_score = models.PositiveSmallIntegerField(default=0, help_text="Default: 0")
     date = models.DateField(blank=True)
 
     class Meta:
@@ -136,7 +136,10 @@ class Exam(models.Model):
         return self.name
     
     def get_absolute_url(self):
-        return reverse("exam_detail", kwargs={"pk": self.pk})
+        return reverse("teachadmin:exam_detail", kwargs={
+            "subject_pk": self.subject.pk,
+            "pk": self.pk
+            })
 
     def has_score(self):
         if self.examscore_set.all().count() == 0:
