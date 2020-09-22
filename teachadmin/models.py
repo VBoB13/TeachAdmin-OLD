@@ -398,11 +398,11 @@ class BehaviorEvent(models.Model):
     
 
 class Homework(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=50, help_text="Within 50 characters.")
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    min_score = models.PositiveSmallIntegerField(default=0)
-    max_score = models.PositiveSmallIntegerField(default=100)
-    deadline = models.DateTimeField(default=timezone.now)
+    min_score = models.PositiveSmallIntegerField(default=0, help_text="Default: 0")
+    max_score = models.PositiveSmallIntegerField(default=100, help_text="Default: 100")
+    deadline = models.DateTimeField(default=timezone.now, help_text="Format: YYYY-MM-DD HH:MM:SS")
 
     class Meta:
         ordering = [

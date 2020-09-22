@@ -102,7 +102,7 @@ class LessonForm(forms.ModelForm):
 class LessonTestForm(forms.ModelForm):
     class Meta:
         model = LessonTest
-        fields = ('name', 'lesson', 'test_date', 'min_score', 'max_score')
+        fields = '__all__'
 
 
 class LessonTestScoreForm(forms.ModelForm):

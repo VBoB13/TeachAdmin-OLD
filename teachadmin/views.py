@@ -773,6 +773,35 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
         return context
 
 
+class HomeworkUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/homework_form.html'
+
+    form_class = forms.HomeworkForm
+    model = Homework
+    context_object_name = 'homework'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Update {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+
+class HomeworkDeleteView(LoginRequiredMixin, generic.DeleteView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/homework_confirm_delete.html'
+
+    model = Homework
+    success_url = reverse_lazy('teachadmin:subject_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Delete {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+
 class HomeworkScoreCreateView(LoginRequiredMixin, generic.CreateView):
     login_url = 'teachadmin/login/'
     redirect_field_name = 'teachadmin/index.html'
