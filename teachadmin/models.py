@@ -181,11 +181,11 @@ class Lesson(models.Model):
 
 
 class LessonTest(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, help_text="Within 50 characters.")
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    max_score = models.PositiveSmallIntegerField(default=100)
-    min_score = models.PositiveSmallIntegerField(default=0)
-    test_date = models.DateField(blank=True)
+    max_score = models.PositiveSmallIntegerField(default=100, help_text="Default: 100")
+    min_score = models.PositiveSmallIntegerField(default=0, help_text="Default: 0")
+    test_date = models.DateField(blank=True, help_text="Format: yyyy-mm-dd")
 
     class Meta:
         ordering = [

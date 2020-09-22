@@ -914,7 +914,8 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
         view_title = "{} ({})".format(self.object, self.object.subject)
         context['view_title'] = view_title
 
-        context['graph'] = self.create_graph()
+        #context['graph'] = self.create_graph()
+        context['graph'] = False
 
         return context
 
@@ -971,7 +972,6 @@ class LessonDeleteView(LoginRequiredMixin, generic.DeleteView):
         context["view_title"] = view_title
         return context
     
-
 
 class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
     login_url = 'teachadmin/login/'
@@ -1082,6 +1082,34 @@ class LessonTestCreateView(LoginRequiredMixin, generic.CreateView):
 
         return context
 
+
+class LessonTestUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/lessontest_form.html'
+
+    form_class = forms.LessonTestForm
+    model = LessonTest
+    context_object_name = 'lessontest'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Update {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+class LessonTestDeleteView(LoginRequiredMixin, generic.DeleteView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/lessontest_confirm_delete.html'
+
+    model = LessonTest
+    success_url = reverse_lazy('teachadmin:subject_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Delete {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
 
 class LessonTestScoreDetailView(LoginRequiredMixin, generic.DetailView):
     login_url = 'teachadmin/login/'
