@@ -21,12 +21,15 @@
             <form action="" method="POST">
                 {% csrf_token %}
                 {% bootstrap_form form %}
-                <label for="subject_students">Student</label><br>
-                <select name="student" id="subject_students" class="form-control">
-                    {% for student in subject.student_set.all %}
-                        <option value="{{ student.pk }}">{{ student }}</option>
-                    {% endfor %}
-                </select><br><br>
+                {% if not form.instance.pk %}
+                    <label for="subject_students">Student</label><br>
+                    <select name="student" id="subject_students" class="form-control">
+                        {% for student in subject.student_set.all %}
+                            <option value="{{ student.pk }}">{{ student }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
+                <br><br>
                 <input type="submit" value="Add score" class="btn btn-primary">
             </form>
         </div>

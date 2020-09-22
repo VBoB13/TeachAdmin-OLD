@@ -385,6 +385,36 @@ class ExamScoreCreateView(LoginRequiredMixin, generic.CreateView):
         return super().form_valid(form)
 
 
+class ExamScoreUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/examscore_form.html'
+
+    form_class = forms.ExamScoreForm
+    model = ExamScore
+    context_object_name = 'examscore'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Update {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+
+class ExamScoreDeleteView(LoginRequiredMixin, generic.DeleteView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/examscore_confirm_delete.html'
+
+    model = ExamScore
+    success_url = reverse_lazy('teachadmin:subject_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Delete {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+    
+
+
 class IndexView(LoginRequiredMixin, generic.ListView):
     login_url = 'teachadmin/login/'
     redirect_field_name = 'teachadmin/index.html'
