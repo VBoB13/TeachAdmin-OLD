@@ -5,8 +5,7 @@
 {% block view_title_block %}
     <div class="jumbotron bg-secondary">
         <h1 class="display-4" align="center">
-            {{ view_title }}<br>
-            {{ view_title2 }}
+            {{ view_title }}
         </h1>
     </div>
 {% endblock view_title_block %}
@@ -16,12 +15,14 @@
     <form method="POST">
         {% csrf_token %}
         {% bootstrap_form form %}
-        <label for="lessontestscore_students">Student</label><br>
+        {% if not form.instance.pk %}
+            <label for="lessontestscore_students">Student</label><br>
             <select name="students" id="lessontestscore_students" class="form-control">
                 {% for student in lessontest.lesson.subject.student_set.all %}
                     <option value="{{ student.pk }}">{{ student }}</option>
                 {% endfor %}
             </select><br><br>
-        <input type="submit" value="Add score" class="btn btn-primary">
+        {% endif %}
+        <input type="submit" value="{% if form.instance.pk %}Update{% else %}Add{% endif %} score" class="btn btn-primary">
     </form>
 {% endblock content_block %}

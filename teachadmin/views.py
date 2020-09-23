@@ -414,7 +414,6 @@ class ExamScoreDeleteView(LoginRequiredMixin, generic.DeleteView):
         return context
     
 
-
 class IndexView(LoginRequiredMixin, generic.ListView):
     login_url = 'teachadmin/login/'
     redirect_field_name = 'teachadmin/index.html'
@@ -1062,13 +1061,8 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
 
             # Initiating graph
             fig = plt.figure()
-            sns.set_style(
-                style='darkgrid',
-                rc={
-                    'axes.facecolor': 'lightgrey',
-                    'figure.facecolor': 'black'
-                }
-            )
+            sns.set_style(style='darkgrid')
+            plt.style.use("dark_background")
 
             # Note: Since the seaborn 'swarmplot' wouldn't let me omit either 'x' or 'y' to get the 'hue' shown properly
             # I had to provide 'dummy-data' for the 'x' to make the 'hue' work
@@ -1155,6 +1149,7 @@ class LessonTestUpdateView(LoginRequiredMixin, generic.UpdateView):
         view_title = "Update {}".format(self.object)
         context["view_title"] = view_title
         return context
+
     
 class LessonTestDeleteView(LoginRequiredMixin, generic.DeleteView):
     login_url = 'teachadmin/login/'
@@ -1195,8 +1190,9 @@ class LessonTestScoreCreateView(LoginRequiredMixin, generic.CreateView):
     form_class = forms.LessonTestScoreForm
 
     def form_valid(self, form):
-        student = Student.objects.get(pk=self.request.POST.get('students'))
-        form.instance.student = student
+        if self.request.POST.get('students'):
+            student = Student.objects.get(pk=self.request.POST.get('students'))
+            form.instance.student = student
 
         return super().form_valid(form)
 
@@ -1211,13 +1207,40 @@ class LessonTestScoreCreateView(LoginRequiredMixin, generic.CreateView):
             context['form'] = form
             context['lessontest'] = lessontest
             self.view_title += " for {}".format(lessontest)
-            self.view_title2 = "{} ({})".format(lessontest.lesson, lessontest.lesson.subject)
-            context['view_title2'] = self.view_title2
-        
+
         context['view_title'] = self.view_title
 
         return context
 
+
+class LessonTestScoreUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/lessontestscore_form.html'
+
+    form_class = forms.LessonTestScoreForm
+    model = LessonTestScore
+    context_object_name = 'lessontestscore'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Update {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+
+
+class LessonTestScoreDeleteView(LoginRequiredMixin, generic.DeleteView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/lessontestscore_confirm_delete.html'
+
+    model = LessonTestScore
+    success_url = reverse_lazy('teachadmin:subject_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Delete {} ({})".format(self.object, self.object.student)
+        context["view_title"] = view_title
+        return context
+    
 
 class OtherStudentsList(LoginRequiredMixin, generic.ListView):
     login_url = 'teachadmin/login/'

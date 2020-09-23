@@ -30,7 +30,7 @@
                     </select>
                 {% endif %}
                 <br><br>
-                <input type="submit" value="Add score" class="btn btn-primary">
+                <input type="submit" value="{% if form.instance.pk %}Update{% else %}Add{% endif %} score" class="btn btn-primary">
             </form>
         </div>
     </div>
