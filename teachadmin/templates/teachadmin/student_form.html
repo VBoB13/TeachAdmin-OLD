@@ -22,12 +22,17 @@
                 {% if forloop.first %}
                     <option value="">--None--</option>
                 {% endif %}
-                <option value="{{ homeroom.pk }}">{{ homeroom }}</option>
+                <option value="{{ homeroom.pk }}"
+                {% if homeroom in student.homeroom %}
+                    selected>{{ homeroom }}</option>
+                {% else %}
+                    >{{ homeroom }}</option>
+                {% endif %}
             {% endfor %}
             </select>
             <small class="text-muted">Optional.</small>
             </p>
         {% endif %}
-        <input type="submit" value="Add Student" class="btn btn-primary" />
+        <input type="submit" value="{% if form.instance.pk %}Update{% else %}Add{% endif %} student" class="btn btn-primary" />
     </form>
 {% endblock content_block %}

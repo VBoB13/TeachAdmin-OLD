@@ -1687,6 +1687,43 @@ class StudentCreateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
+class StudentUpdateView(LoginRequiredMixin, generic.UpdateView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/student_form.html'
+
+    form_class = forms.StudentForm
+    model = Student
+    context_object_name = 'student'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Update {}".format(self.object)
+
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        if teacher.has_homeroom():
+            homerooms = teacher.homeroom_set.all()
+            context['homerooms'] = homerooms
+
+        context['teacher'] = teacher
+
+        context["view_title"] = view_title
+        return context
+
+
+class StudentDeleteView(LoginRequiredMixin, generic.DeleteView):
+    login_url = 'teachadmin/login/'
+    redirect_field_name = 'teachadmin/student_confirm_delete.html'
+
+    model = Student
+    success_url = reverse_lazy('teachadmin:student_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        view_title = "Delete {}".format(self.object)
+        context["view_title"] = view_title
+        return context
+
+
 class SubjectListView(LoginRequiredMixin, generic.ListView):
     """ Subject List View """
     

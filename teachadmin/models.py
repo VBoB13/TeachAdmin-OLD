@@ -216,12 +216,13 @@ class Student(models.Model):
     first_name = models.CharField(max_length=50, help_text="Within 50 characters.")
     last_name = models.CharField(
         max_length=50,
-        null=True,
+        blank=True,
+        default="",
         help_text="Within 50 characters.")
     student_number = models.CharField(
         max_length=20,
-        null=True,
-        default=None,
+        blank=True,
+        default="",
         help_text="Within 50 characters.")
     homeroom = models.ForeignKey(HomeRoom, blank=True, null=True, on_delete=models.SET_NULL)
     subject = models.ManyToManyField(Subject)
@@ -250,7 +251,7 @@ class Student(models.Model):
         ]
 
     def __str__(self):
-        if self.last_name == None:
+        if len(self.last_name) == 0:
             return self.first_name
         else:
             return "{} {}".format(self.first_name, self.last_name)
