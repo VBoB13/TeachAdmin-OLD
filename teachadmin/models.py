@@ -207,10 +207,28 @@ class LessonTest(models.Model):
                 })
 
     def has_score(self):
-        if self.lessontestscore_set.all().count() == 0:
-            return False
-        return True
+        """ Checks whether the LessonTest has any test scores associated with it.
+            INPUT: None
+            OUTPUT: bool """
+
+        if self.lessontestscore_set.all().count() > 0:
+            return True
+        return False
     
+    def students(self):
+        """ Returns UNIQUE students that has scores for the current test. """
+
+        if self.has_score():
+            return self.lesson.subject.student_set.distinct()
+        else:
+            return False
+
+    def scores(self):
+        """ Returns all the scores associated with the current test. """
+        if self.has_score():
+            return LessonTestScore.objects.filter(lessonTest=self)
+        else:
+            return False
 
 class Student(models.Model):
     first_name = models.CharField(max_length=50, help_text="Within 50 characters.")
@@ -236,9 +254,8 @@ class Student(models.Model):
         (MALE, 'Male'),
         (OTHER, 'Other'),
     ]
-
     gender = models.CharField(
-        max_length=10,
+        max_length=1,
         choices=GENDERS_CHOICES,
         default=FEMALE
     )

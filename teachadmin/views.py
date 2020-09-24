@@ -20,6 +20,8 @@ from .models import (Teacher, School, Student,
 from . import forms
 from django import forms as djangoforms
 
+from .graph import Graph
+
 from datetime import datetime
 import pandas as pd
 import seaborn as sns
@@ -203,7 +205,7 @@ class ExamDetailView(LoginRequiredMixin, generic.DetailView):
         """ Takes ExamScores from the current Exam and
             creates & stores a graph that is shown in the view 
             INPUT: None (self)
-            RETURN: None """
+            RETURN: uri / None """
 
         examscores = ExamScore.objects.filter(exam=self.object)
         if examscores.count() > 0:
@@ -1039,75 +1041,16 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'lessontest'
     model = LessonTest
 
-    def create_graph(self):
-        lessontestscores = LessonTestScore.objects.filter(lessonTest=self.object)
-        if lessontestscores.count() >= 2:
-            scores = self.object.lessontestscore_set.all()
-            index = []
-            scoresDict = {
-                "Student":[],
-                "Gender":[],
-                "{}".format(self.object.name):[]
-            }
-
-            for count, score in enumerate(scores):
-                index.append(count)
-                scoresDict['Student'].append(score.student)
-                scoresDict['Gender'].append(score.student.gender)
-                scoresDict['{}'.format(self.object.name)].append(score.score)
-
-            scoresDF = pd.DataFrame(data=scoresDict, index=index)
-            scoresDF['Gender'] = scoresDF['Gender'].apply(gender_map)
-
-            # Initiating graph
-            fig = plt.figure()
-            sns.set_style(style='darkgrid')
-            plt.style.use("dark_background")
-
-            # Note: Since the seaborn 'swarmplot' wouldn't let me omit either 'x' or 'y' to get the 'hue' shown properly
-            # I had to provide 'dummy-data' for the 'x' to make the 'hue' work
-            # Link to issue: https://github.com/mwaskom/seaborn/issues/941
-            sns.swarmplot(
-                data=scoresDF,
-                x=[""]*len(scoresDF),
-                y='{}'.format(self.object.name),
-                hue='Gender',
-                palette='deep',
-                size=7
-            )
-            axes = fig.gca()
-            axes.set_ylim(
-                (scoresDF.min(axis=0, numeric_only=True).min())-3,
-                (scoresDF.max(axis=0, numeric_only=True).max())+5
-            )
-            plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
-                     rotation_mode="anchor")
-            axes.set_title("{} scores".format(self.object))
-            axes.legend(title='Gender', loc='center left', bbox_to_anchor=(1.02, 0.90))
-            plt.tight_layout()
-
-            # Getting the complete filepath to which we save the graph
-            buf = io.BytesIO()
-            try:
-                plt.savefig(buf, format='png')
-            except Exception as err:
-                print("Couldn't generate the graph for {}".format(self.object))
-                print(err)
-            else:
-                buf.seek(0)
-                pltstring = base64.b64encode(buf.read())
-                uri = urllib.parse.quote(pltstring)
-                return uri
-                
-        return False
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         self.view_title = "{}".format(self.object)
         context['view_title'] = self.view_title
 
-        context['graph'] = self.create_graph()
+        graph = Graph(self.object)
+        print(graph.df)
+        if graph.uri != False:
+            context['graph'] = graph.uri
 
         return context
 
@@ -1646,6 +1589,8 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
 
         if self.object.subject != None:
             context['subjects'] = self.object.subject.all()
+
+        graph = Graph(self.object)
 
 
         return context
@@ -2283,6 +2228,7 @@ def addAssignment(request, student_class_id):
 
     return HttpResponseRedirect(reverse('teachadmin:studentsView',
                                                     args=(studentClass.pk,)))
+
 
 def gender_map(gender):
     if gender == 'F':
