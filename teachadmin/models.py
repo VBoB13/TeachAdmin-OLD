@@ -146,6 +146,19 @@ class Exam(models.Model):
             return False
         else:
             return True
+    
+    def students(self):
+        """ Returns a list of UNIQUE students that has scores for the current exam. """
+
+        if self.has_score():
+            students = []
+            scores = self.examscore_set.all()
+            for score in scores:
+                if score.student not in students:
+                    students.append(score.student)
+            return students
+        else:
+            return False
 
 
 class Lesson(models.Model):
@@ -216,10 +229,17 @@ class LessonTest(models.Model):
         return False
     
     def students(self):
-        """ Returns UNIQUE students that has scores for the current test. """
+        """ Returns list of UNIQUE students that has scores for the current test.
+            params: None
+            OUTPUT: list / False """
 
         if self.has_score():
-            return self.lesson.subject.student_set.distinct()
+            students = []
+            scores = self.lessontestscore_set.all()
+            for score in scores:
+                if score.student not in students:
+                    students.append(score.student)
+            return students
         else:
             return False
 
@@ -229,6 +249,7 @@ class LessonTest(models.Model):
             return LessonTestScore.objects.filter(lessonTest=self)
         else:
             return False
+
 
 class Student(models.Model):
     first_name = models.CharField(max_length=50, help_text="Within 50 characters.")
@@ -299,10 +320,30 @@ class Assignment(models.Model):
         return "{}".format(self.name)
 
     def has_score(self):
-        if self.assignmentscore_set.all.count() == 0:
+        if self.assignmentscore_set.all().count() == 0:
             return False
         else:
             return True
+    
+    def students(self):
+        """ Returns UNIQUE students that has scores for the current test. """
+
+        if self.has_score():
+            students = []
+            scores = self.assignmentscore_set.all()
+            for score in scores:
+                if score.student not in students:
+                    students.append(score.student)
+            return students
+        else:
+            return False
+
+    def scores(self):
+        """ Returns all the scores associated with the current test. """
+        if self.has_score():
+            return self.assignmentscore_set.all()
+        else:
+            return False
 
 
 class AssignmentScore(models.Model):
@@ -442,6 +483,19 @@ class Homework(models.Model):
         if self.homeworkscore_set.all().count() >= 1:
             return True
         return False
+    
+    def students(self):
+        """ Returns a list of UNIQUE students that has scores for the current homework. """
+
+        if self.has_score():
+            students = []
+            scores = self.assignmentscore_set.all()
+            for score in scores:
+                if score.student not in students:
+                    students.append(score.student)
+            return students
+        else:
+            return False
 
 
 class HomeworkScore(models.Model):

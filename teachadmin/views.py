@@ -126,7 +126,8 @@ class AssignmentDetailView(LoginRequiredMixin, generic.DetailView):
         assignmentscores = self.object.assignmentscore_set.filter(student__in=students)
         context['assignmentscores'] = assignmentscores
 
-        context['graph'] = self.create_graph()
+        graph = Graph(self.object)
+        context['graph'] = graph.uri
 
         return context
 
@@ -1589,8 +1590,6 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
 
         if self.object.subject != None:
             context['subjects'] = self.object.subject.all()
-
-        graph = Graph(self.object)
 
 
         return context
