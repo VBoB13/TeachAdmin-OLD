@@ -45,77 +45,6 @@ class AssignmentDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = 'teachadmin/assignment_detail.html'
     context_object_name = 'assignment'
 
-    def create_graph(self):
-        """ Takes AssignmentScores from the current Assignment
-            and creates & stores a graph that is then shown in the view.
-            INPUT: None (self) 
-            RETURN: Bool """
-        students = self.object.subject.student_set.all()
-        assignmentscores = AssignmentScore.objects.filter(assignment=self.object, student__in=students)
-        if assignmentscores.count() >= 1:
-
-            index = []
-            scores = {}
-            scores['Student'] = []
-            scores['Gender'] = []
-            scores['{}'.format(self.object.name)] = []
-
-            for count, score in enumerate(assignmentscores):
-                index.append(count)
-                scores['Student'].append(score.student.first_name)
-                scores['Gender'].append(score.student.gender)
-                scores['{}'.format(self.object.name)].append(score.score)
-            
-            scoresDF = pd.DataFrame(data=scores, index=index)
-
-            # Initiating graph
-            fig = plt.figure()
-            sns.set_style(style='darkgrid', rc={
-                'axes.facecolor':'lightgrey',
-                'figure.facecolor':'black'
-            })
-
-            # Note: Since the seaborn 'swarmplot' wouldn't let me omit either 'x' or 'y' to get the 'hue' shown properly
-            # I had to provide 'dummy-data' for the 'x' to make the 'hue' work
-            # Link to issue: https://github.com/mwaskom/seaborn/issues/941
-            sns.swarmplot(
-                data=scoresDF,
-                x=[""]*len(scoresDF),
-                y='{}'.format(self.object.name),
-                hue='Gender',
-                palette='deep'
-            )
-            axes = fig.gca()
-            axes.set_ylim(
-                (scoresDF.min(axis=0, numeric_only=True).min())-2,
-                (scoresDF.max(axis=0, numeric_only=True).max())+2
-            )
-            plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
-                     rotation_mode="anchor")
-            axes.set_title("{} scores".format(self.object))
-            axes.legend(
-                title='Gender',
-                loc='center left',
-                bbox_to_anchor=(1.02, 0.90))
-            plt.tight_layout()
-
-            buf = io.BytesIO()
-            fig = plt.gcf()
-            try:
-                plt.savefig(buf, format='png')
-                buf.seek(0)
-                figstring = base64.b64encode(buf.read())
-                uri = urllib.parse.quote(figstring)
-            except Exception as err:
-                print("Error while processing data for {}".format(self.object))
-                print(err)
-            else:
-                plt.close(fig)
-                return uri
-
-        return False
-        
-
     def get_queryset(self):
         return Assignment.objects.filter(pk=self.kwargs.get('pk'))
 
@@ -202,69 +131,6 @@ class ExamDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = 'teachadmin/exam_detail.html'
     context_object_name = 'exam'
 
-    def create_graph(self):
-        """ Takes ExamScores from the current Exam and
-            creates & stores a graph that is shown in the view 
-            INPUT: None (self)
-            RETURN: uri / None """
-
-        examscores = ExamScore.objects.filter(exam=self.object)
-        if examscores.count() > 0:
-
-            index = []
-            scores = {}
-            scores['Student'] = []
-            scores['Gender'] = []
-            scores['{}'.format(self.object.name)] = []
-
-            for count, score in enumerate(examscores):
-                index.append(count)
-                scores['Student'].append(score.student.first_name)
-                scores['Gender'].append(score.student.gender)
-                scores['{}'.format(self.object.name)].append(score.score)
-            
-            scoresDF = pd.DataFrame(data=scores, index=index)
-
-            fig = plt.figure()
-            sns.set_style(style='darkgrid')
-            plt.style.use("dark_background")
-            sns.swarmplot(
-                data=scoresDF,
-                x=[""]*len(scoresDF),
-                y='{}'.format(self.object.name),
-                hue='Gender',
-                palette='deep')
-
-            axes = fig.gca()
-            axes.set_ylim(
-                (scoresDF.min(axis=0, numeric_only=True).min())-3,
-                (scoresDF.max(axis=0, numeric_only=True).max())+5
-            )
-
-            plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
-                        rotation_mode="anchor")
-            axes.set_title("{} scores".format(self.object))
-            plt.tight_layout()
-
-            # To save space on the server, I convert the graph into 64-bit data and
-            # put it into a local memory buffert from which the img-tag reads the data
-            # and displays the graph
-            buf = io.BytesIO()
-            fig = plt.gcf()
-            try:
-                plt.savefig(buf, format='png')
-                buf.seek(0)
-                figstring = base64.b64encode(buf.read())
-                uri = urllib.parse.quote(figstring)
-            except Exception as err:
-                print("Error while processing data for {}".format(self.object))
-                print(err)
-            else:
-                plt.close(fig)
-                return uri
-        
-        return None
-
     def get_queryset(self):
         return Exam.objects.filter(pk=self.kwargs['pk'])
 
@@ -275,8 +141,8 @@ class ExamDetailView(LoginRequiredMixin, generic.DetailView):
         self.view_title = "{} ({})".format(self.object, subject)
         context['view_title'] = self.view_title
 
-        graph = self.create_graph()
-        context['graph'] = graph
+        graph = Graph(self.object)
+        context['graph'] = graph.uri
 
         return context
 
@@ -727,80 +593,14 @@ class HomeworkDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'homework'
     model = Homework
 
-    def create_graph(self):
-        students = self.object.lesson.subject.student_set.all()
-        homeworkscores = self.object.homeworkscore_set.filter(student__in=students)
-
-        index = []
-        scoresDict = {
-            "Student":[],
-            "Gender":[],
-            "{}".format(self.object):[]
-        }
-        if homeworkscores.count() >= 1:
-            for count, student in enumerate(students):
-                scorelist = []
-                for homeworkscore in homeworkscores.filter(student=student):
-                    scorelist.append(
-                        round(((homeworkscore.score/homeworkscore.homework.max_score)*100),1)
-                    )
-                if len(scorelist) >= 1:
-                    index.append(count)
-                    scoresDict['Student'].append(str(student))
-                    scoresDict['Gender'].append(student.gender)
-                    scoresDict['{}'.format(self.object)].append(
-                        max(scorelist)
-                    )
-
-            scoresDF = pd.DataFrame(data=scoresDict, index=index)
-            scoresDF['Gender'] = scoresDF['Gender'].apply(gender_map)
-
-            fig = plt.figure()
-            sns.set_style(style='darkgrid', rc={
-                'axes.facecolor': 'lightgrey'
-            })
-            plt.style.use("dark_background")
-            sns.swarmplot(
-                data=scoresDF,
-                palette='bright')
-
-            axes = fig.gca()
-            axes.set_ylim(
-                (scoresDF.min(axis=0, numeric_only=True).min())-2,
-                (scoresDF.max(axis=0, numeric_only=True).max())+3
-            )
-
-            plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
-                    rotation_mode="anchor")
-            axes.set_title("{} scores".format(self.object))
-            plt.tight_layout()
-
-            # To save space on the server, I convert the graph into 64-bit data and
-            # put it into a local memory buffert from which the img-tag reads the data
-            # and displays the graph
-            buf = io.BytesIO()
-            fig = plt.gcf()
-            try:
-                plt.savefig(buf, format='png')
-                buf.seek(0)
-                figstring = base64.b64encode(buf.read())
-                uri = urllib.parse.quote(figstring)
-            except Exception as err:
-                print("Error while processing data for {}".format(self.object))
-                print(err)
-            else:
-                plt.close(fig)
-                return uri
-        else:
-            return False
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
         view_title = "{} ({})".format(self.object, self.object.lesson)
         context['view_title'] = view_title
 
-        context['graph'] = self.create_graph()
+        graph = Graph(self.object)
+        context['graph'] = graph.uri
 
         return context
 

@@ -7,7 +7,7 @@ import io
 import urllib
 import base64
 
-SCORE_MODELS = (LessonTest, Assignment)
+SCORE_MODELS = (Assignment, Exam, LessonTest, Homework)
 
 class Graph():
     """ This class is meant to simplify the code for generating graphs
@@ -16,18 +16,15 @@ class Graph():
 
     model_instance = None
     model = None
-    uri = None
-    df = None
+    uri = False
+    df = pd.DataFrame()
 
     def __init__(self, model_instance):
         try:
             if isinstance(model_instance, SCORE_MODELS):
-                if isinstance(model_instance, LessonTest):
-                    self.model = LessonTest
-                elif isinstance(model_instance, Assignment):
-                    self.model = Assignment
-                else:
-                    pass
+                for score_model in SCORE_MODELS:
+                    if isinstance(model_instance, score_model):
+                        self.model = score_model
                 self.model_instance = model_instance
                 self.df = self._get_dataframe()
                 self.uri = self._get_uri()
@@ -41,32 +38,31 @@ class Graph():
     def _create_df(self):
         students = self.model_instance.students()
         all_scores = self.model_instance.scores()
-        scores_dict = {
-            'Student': [],
-            'Gender': [],
-            '{}'.format(self.model_instance): []
-        }
-
-        for student in students:
-            score_list = []
-            for score in all_scores.filter(student=student):
-                score_list.append(score.score)
-            if len(score_list) >= 1:
-                max_score = max(score_list)
-                scores_dict['Student'].append(student)
-                scores_dict['Gender'].append(student.gender)
-                scores_dict['{}'.format(self.model_instance)].append(max_score)
-        
-        try:
-            df = pd.DataFrame(data=scores_dict)
-        except Exception as err:
-            print("Error while creating DataFrame for {}".format(self.model_instance))
-            print(err)
-        else:
-            if not df.empty:
-                if "Gender" in df.columns:
+        if len(students) != 0 or all_scores != None:
+            scores_dict = {
+                'Student': [],
+                'Gender': [],
+                '{}'.format(self.model_instance): []
+            }    
+            for student in students:
+                score_list = []
+                for score in all_scores.filter(student=student):
+                    score_list.append(score.score)
+                if len(score_list) >= 1:
+                    max_score = max(score_list)
+                    scores_dict['Student'].append(student)
+                    scores_dict['Gender'].append(student.gender)
+                    scores_dict['{}'.format(self.model_instance)].append(max_score)
+            
+            try:
+                df = pd.DataFrame(data=scores_dict)
+            except Exception as err:
+                print("Error while creating DataFrame for {}".format(self.model_instance))
+                print(err)
+            else:
+                if not df.empty:
                     df['Gender'] = df['Gender'].apply(self._gender_map)
-                return df
+                    return df
 
     def _gender_map(self, gender):
         if gender == 'F':
@@ -77,10 +73,10 @@ class Graph():
             return 'Other'
 
     def _get_dataframe(self):
-        if self.model in SCORE_MODELS:
+        if isinstance(self.model_instance, SCORE_MODELS):
             df = self._create_df()
-        else:
-            return None
+            return df
+        df = pd.DataFrame()
         return df
     
     def _create_uri(self):
@@ -121,19 +117,17 @@ class Graph():
         except Exception as err:
             print("Error while saving graph for {}".format(self.model_instance))
             print(err)
+            return False
         else:
             buf.seek(0)
             pltstring = base64.b64encode(buf.read())
             uri = urllib.parse.quote(pltstring)
             return uri
 
-        return False
-
     def _get_uri(self):
-        if self.model in SCORE_MODELS:
+        if not self.df.empty:
             uri = self._create_uri()
-        else:
-            return None
-        return uri
+            return uri
+        return None
 
     

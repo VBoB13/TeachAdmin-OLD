@@ -160,6 +160,11 @@ class Exam(models.Model):
         else:
             return False
 
+    def scores(self):
+        if self.has_score():
+            return self.examscore_set.all()
+        return None
+
 
 class Lesson(models.Model):
     name = models.CharField(max_length=100)
@@ -246,9 +251,8 @@ class LessonTest(models.Model):
     def scores(self):
         """ Returns all the scores associated with the current test. """
         if self.has_score():
-            return LessonTestScore.objects.filter(lessonTest=self)
-        else:
-            return False
+            return self.lessontestscore_set.all()
+        return False
 
 
 class Student(models.Model):
@@ -489,13 +493,18 @@ class Homework(models.Model):
 
         if self.has_score():
             students = []
-            scores = self.assignmentscore_set.all()
+            scores = self.homeworkscore_set.all()
             for score in scores:
                 if score.student not in students:
                     students.append(score.student)
             return students
         else:
             return False
+    
+    def scores(self):
+        if self.has_score():
+            return self.homeworkscore_set.all()
+        return False
 
 
 class HomeworkScore(models.Model):
