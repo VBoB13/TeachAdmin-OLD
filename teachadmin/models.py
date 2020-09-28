@@ -23,10 +23,7 @@ class Teacher(models.Model):
         return reverse("teacher_detail", kwargs={"pk": self.pk})
 
     def has_homeroom(self):
-        if self.homeroom_set.all().count() == 0:
-            return False
-        else:
-            return True
+        return self.homeroom_set.all().exists()
     
 
 class School(models.Model):
@@ -70,14 +67,10 @@ class HomeRoom(models.Model):
         return reverse("teachadmin:homeroom_detail", kwargs={"pk": self.pk})
 
     def has_students(self):
-        if self.student_set.all().count() >= 1:
-            return True
-        return False
-
+        return self.student_set.all().exists()
+        
     def has_subject(self):
-        if self.subject_set.all().count() >= 1:
-            return True
-        return False
+        return self.subject_set.all().exists()
     
 
 class Subject(models.Model):
@@ -99,22 +92,13 @@ class Subject(models.Model):
         return reverse("teachadmin:subject_detail", kwargs={"pk": self.pk})
 
     def has_exam(self):
-        if self.exam_set.all().count() == 0:
-            return False
-        else:
-            return True
+        return self.exam_set.all().exists()
     
     def has_assignment(self):
-        if self.assignment_set.all().count() == 0:
-            return False
-        else:
-            return True
+        return self.assignment_set.all().exists()
     
     def has_lesson(self):
-        if self.lesson_set.all().count() == 0:
-            return False
-        else:
-            return True
+        return self.lesson_set.all().exists()
 
 
 class Exam(models.Model):
@@ -141,18 +125,25 @@ class Exam(models.Model):
             "pk": self.pk
             })
 
+    def clean(self):
+        all_exams_in_subject = self.subject.exam_set.all()
+        for exam in all_exams_in_subject:
+            if self.name == exam.name:
+                raise ValidationError({
+                    "name": ValidationError(_("Exam name already exists. Try another name."), code='invalid')
+                })
+        if self.max_score < self.min_score:
+            raise ValidationError(_("Maximum score cannot be lower than minimum score!"))
+
     def has_score(self):
-        if self.examscore_set.all().count() == 0:
-            return False
-        else:
-            return True
+        return self.examscore_set.all().exists()
     
     def students(self):
         """ Returns a list of UNIQUE students that has scores for the current exam. """
 
         if self.has_score():
             students = []
-            scores = self.examscore_set.all()
+            scores = self.examscore_set.all().select_related('student')
             for score in scores:
                 if score.student not in students:
                     students.append(score.student)
@@ -163,7 +154,7 @@ class Exam(models.Model):
     def scores(self):
         if self.has_score():
             return self.examscore_set.all()
-        return None
+        return False
 
 
 class Lesson(models.Model):
@@ -224,14 +215,23 @@ class LessonTest(models.Model):
                 "pk": self.pk
                 })
 
+    def clean(self):
+        if self.lesson.lessontest_set.filter(name__iexact=self.name).exists():
+            raise ValidationError({
+                "name": ValidationError(_("Lesson test with name {} already exists. Please choose another name.").format(self.name),
+                code='invalid')
+            })
+        if self.min_score > self.max_score:
+            raise ValidationError({
+                "max_score": ValidationError(_("Minimum score cannot be higher than maximum score."), code='invalid')
+            })
+
+
     def has_score(self):
         """ Checks whether the LessonTest has any test scores associated with it.
             INPUT: None
             OUTPUT: bool """
-
-        if self.lessontestscore_set.all().count() > 0:
-            return True
-        return False
+        return self.lessontestscore_set.all().exists()
     
     def students(self):
         """ Returns list of UNIQUE students that has scores for the current test.
@@ -256,7 +256,9 @@ class LessonTest(models.Model):
 
 
 class Student(models.Model):
-    first_name = models.CharField(max_length=50, help_text="Within 50 characters.")
+    first_name = models.CharField(
+        max_length=50,
+        help_text="Within 50 characters.")
     last_name = models.CharField(
         max_length=50,
         blank=True,
@@ -266,7 +268,7 @@ class Student(models.Model):
         max_length=20,
         blank=True,
         default="",
-        help_text="Within 50 characters.")
+        help_text="Within 20 characters.")
     homeroom = models.ForeignKey(HomeRoom, blank=True, null=True, on_delete=models.SET_NULL)
     subject = models.ManyToManyField(Subject)
     teacher = models.ManyToManyField(Teacher)
@@ -366,6 +368,17 @@ class AssignmentScore(models.Model):
             return "{} ({}%)".format(self.score,
                 round((self.score/self.assignment.max_score)*100,1))
 
+    def clean(self):
+        # Don't allow for scores higher than the Assignment's max_score field
+        if self.score > self.assignment.max_score:
+            raise ValidationError({
+                "score": ValidationError(_("Score cannot be higher than the assignment's maximum score."), code='invalid')
+            })
+        if self.score < self.assignment.min_score:
+            raise ValidationError({
+                "score": ValidationError(_("Score cannot be lower than the assignment's minimum score."), code='invalid')
+            })
+
 
 class ExamScore(models.Model):
     score = models.PositiveSmallIntegerField(default=0)
@@ -390,6 +403,35 @@ class ExamScore(models.Model):
             "subject_pk": self.exam.subject.pk
             })
 
+    def clean(self):
+        # First we check to see whether the chosen student DON'T have any scores for the exam
+        if self.student not in self.exam.students():
+        # Do not allow scores to be set higher than exam's max_score
+            if self.score > self.exam.max_score:
+                raise ValidationError({
+                    "score": ValidationError(
+                        _("Score cannot be higher than exam's maximum score."),
+                        code='invalid'
+                        )
+                    })
+            if self.score < self.exam.min_score:
+                raise ValidationError({
+                    "score": ValidationError(
+                        _("Score cannot be lower than exam's minimum score."),
+                        code='invalid'
+                        )
+                    })
+        else:
+            exam_scores = self.exam.scores().filter(student=self.student).select_related('student')
+            if exam_scores.count() > 0:
+                for score in exam_scores:
+                    if score.score > self.score:
+                        raise ValidationError({
+                            "score": ValidationError(
+                                _("{} already has a higher score than you tried to enter: {} > {} ".format(
+                                score.student, score.score, self.score)), code='invalid')
+                            })
+                    
 
 class LessonTestScore(models.Model):
     score = models.PositiveSmallIntegerField(default=0)
@@ -414,7 +456,28 @@ class LessonTestScore(models.Model):
                 "pk":self.lessonTest.pk
                 }
             )
-
+    
+    def clean(self):
+        # Don't allow user to enter scores that are lower/higher than LessonTest's min/max scores.
+        if self.score > self.lessonTest.max_score:
+            raise ValidationError({
+                "score": ValidationError(_("Score cannot be higher than the lessontest's maximum score."), code='invalid')
+            })
+        if self.score < self.lessonTest.min_score:
+            raise ValidationError({
+                "score": ValidationError(_("Score cannot be lower than the lessontest's minimum score."), code='invalid')
+            })
+        if self.lessonTest.has_score():
+            student_scores = self.lessonTest.scores().filter(student=self.student).select_related('student')
+            if student_scores.count() > 0:
+                for score in student_scores:
+                    if score.score >= self.score:
+                        raise ValidationError({
+                            "score": ValidationError(_("{} already has a higher score: {} > {}".format(
+                                score.student, score.score, self.score
+                            )), code='invalid')
+                        })
+        
 
 class BehaviorType(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
@@ -436,24 +499,21 @@ class BehaviorType(models.Model):
 
 class BehaviorEvent(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    creator = models.ForeignKey(Teacher, null=True, on_delete=models.SET_NULL)
     behaviorType = models.ForeignKey(BehaviorType, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(default=timezone.now)
-    comment = models.CharField(max_length=100)
+    comment = models.TextField(max_length=300)
 
     class Meta:
         ordering = [
             'timestamp',
-            'student',
             'behaviorType',
-            'creator'
+            'student'
         ]
 
     def __str__(self):
-        return "{} #{} {}".format(
+        return "{}: {}".format(
             self.behaviorType,
-            self.student.student_number,
-            self.student.first_name
+            self.student
         )
     
     def get_absolute_url(self):
@@ -484,9 +544,7 @@ class Homework(models.Model):
         })
 
     def has_score(self):
-        if self.homeworkscore_set.all().count() >= 1:
-            return True
-        return False
+        return self.homeworkscore_set.all().exists()
     
     def students(self):
         """ Returns a list of UNIQUE students that has scores for the current homework. """
@@ -511,6 +569,7 @@ class HomeworkScore(models.Model):
     score = models.PositiveSmallIntegerField()
     homework = models.ForeignKey(Homework, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    turn_in_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = [
@@ -531,10 +590,32 @@ class HomeworkScore(models.Model):
                             })
 
     def clean(self):
+        # Don't allow for scores higher than the homework's max_score field
         if self.score > self.homework.max_score:
-            raise ValidationError(_("Score cannot be higher than the Homework's max score. (%(score)s > %(max_score)s)"),
-                                  params={'score': self.score, 'max_score': self.homework.max_score})
+            raise ValidationError({
+                "score": ValidationError(_("Score cannot be higher than the homework's maximum score."), code='invalid')
+            })
+        if self.score < self.homework.min_score:
+            raise ValidationError({
+                "score": ValidationError(_("Score cannot be lower than the homework's minimum score."), code='invalid')
+            })
+        if self.homework.has_score():
+            student_scores = self.homework.scores().filter(student=self.student).select_related('student')
+            if student_scores.exists():
+                for score in student_scores:
+                    if score.score > self.score:
+                        raise ValidationError({
+                            "score": ValidationError(_("{} already has a higher score for this homework: {} > {}".format(
+                                score.student, score.score, self.score
+                            )), code='invalid')
+                        })
+        if self.turn_in_date > timezone.now():
+            ValidationError(_("Did the future {} turn in the paper? I don't think it works that way.".format(self.student)),
+                code='invalid'
+            )
+
+
             
-    
+        
 
     
