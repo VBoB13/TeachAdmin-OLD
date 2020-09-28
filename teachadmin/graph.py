@@ -7,7 +7,10 @@ import io
 import urllib
 import base64
 
-SCORE_MODELS = (Assignment, Exam, LessonTest, Homework)
+assignment = Assignment()
+exam = Exam()
+lessontest = LessonTest()
+homework = Homework()
 
 class Graph():
     """ This class is meant to simplify the code for generating graphs
@@ -21,13 +24,12 @@ class Graph():
 
     def __init__(self, model_instance):
         try:
-            if isinstance(model_instance, SCORE_MODELS):
-                for score_model in SCORE_MODELS:
-                    if isinstance(model_instance, score_model):
-                        self.model = score_model
-                self.model_instance = model_instance
-                self.df = self._get_dataframe()
-                self.uri = self._get_uri()
+            for score_model in SCORE_MODELS:
+                if type(model_instance) == type(score_model):
+                    self.model = score_model
+            self.model_instance = model_instance
+            self.df = self._get_dataframe()
+            self.uri = self._get_uri()
         except TypeError as te:
             print("Cannot establish Graph object.")
             print(te)
@@ -73,7 +75,7 @@ class Graph():
             return 'Other'
 
     def _get_dataframe(self):
-        if isinstance(self.model_instance, SCORE_MODELS):
+        if self.model in SCORE_MODELS:
             df = self._create_df()
             return df
         df = pd.DataFrame()
