@@ -776,6 +776,7 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
         context['view_title'] = view_title
 
         #context['graph'] = self.create_graph()
+        graph = Graph(self.object)
         context['graph'] = False
 
         return context
@@ -849,7 +850,6 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
         context['view_title'] = self.view_title
 
         graph = Graph(self.object)
-        print(graph.df)
         if graph.uri != False:
             context['graph'] = graph.uri
 

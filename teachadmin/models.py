@@ -7,6 +7,8 @@ from django_countries.fields import CountryField
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
+import datetime
+
 # Create your models here.
 
 class Teacher(models.Model):
@@ -160,8 +162,12 @@ class Exam(models.Model):
 class Lesson(models.Model):
     name = models.CharField(max_length=100)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    start_date = models.DateField(verbose_name="Start date", null=True)
-    end_date = models.DateField(verbose_name="End date", null=True)
+    start_date = models.DateField(
+        verbose_name="Start date",
+        null=True,
+        default=datetime.date.today())
+    end_date = models.DateField(verbose_name="End date",
+        null=True, blank=True)
 
     class Meta:
         ordering = [
@@ -179,27 +185,60 @@ class Lesson(models.Model):
             })
 
     def has_lessontest(self):
-        if self.lessontest_set.all().count() >= 1:
-            return True
-        return False
+        """ If the Lesson has any tests, it returns True. Otherwise, it returns False.
+            INPUT: None
+            OUTPUT: bool """
+        return self.lessontest_set.all().exists()
     
     def has_homework(self):
-        if self.homework_set.all().count() >= 1:
-            return True
-        return False
+        """ If the Lesson has any homeworks, it returns True. Otherwise, it returns False.
+            INPUT: None
+            OUTPUT: bool """
+        return self.homework_set.all().exists()
+    
+    def get_LT_and_HW(self):
+        """ This method looks up whether there are any tests or homeworks for the current lesson.
+            If there are, it returns a list of the tests and homeworks.
+            Returns a list of LessonTests and Homeworks (respectively)
+            INPUT: None
+            OUTPUT: list [LessonTest-1, LessonTest-2, Homework-1 ... ModelObject-N] """
+
+        test_hw_list = []
+        if self.has_lessontest():
+            tests = self.lessontest_set.all()
+            for test in tests:
+                if test.has_score():
+                    test_hw_list.append(test)
+
+        if self.has_homework():
+            homeworks = self.homework_set.all()
+            for homework in homeworks:
+                if homework.has_score():
+                    test_hw_list.append(homework)
+
+        return test_hw_list
 
 
 class LessonTest(models.Model):
-    name = models.CharField(max_length=50, help_text="Within 50 characters.")
+    name = models.CharField(
+        max_length=50,
+        help_text="Within 50 characters.")
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
-    max_score = models.PositiveSmallIntegerField(default=100, help_text="Default: 100")
-    min_score = models.PositiveSmallIntegerField(default=0, help_text="Default: 0")
-    test_date = models.DateField(blank=True, help_text="Format: yyyy-mm-dd")
+    max_score = models.PositiveSmallIntegerField(
+        default=100,
+        help_text="Default: 100")
+    min_score = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Default: 0")
+    test_date = models.DateField(
+        default=datetime.date.today(),
+        blank=True,
+        help_text="Format: yyyy-mm-dd")
 
     class Meta:
         ordering = [
-            'lesson',
             'test_date',
+            'lesson',
             'name'
         ]
 
@@ -218,8 +257,10 @@ class LessonTest(models.Model):
     def clean(self):
         if self.lesson.lessontest_set.filter(name__iexact=self.name).exists():
             raise ValidationError({
-                "name": ValidationError(_("Lesson test with name {} already exists. Please choose another name.").format(self.name),
-                code='invalid')
+                "name": ValidationError(_(
+                    "Lesson test with name {} already exists in {}. Please choose another name.").format(
+                    self.name, self.lesson), 
+                    code='invalid')
             })
         if self.min_score > self.max_score:
             raise ValidationError({
@@ -235,23 +276,24 @@ class LessonTest(models.Model):
     
     def students(self):
         """ Returns list of UNIQUE students that has scores for the current test.
+            If there are no scores for the test, it will return False.
             params: None
             OUTPUT: list / False """
 
         if self.has_score():
             students = []
-            scores = self.lessontestscore_set.all()
+            scores = self.lessontestscore_set.all().select_related('student')
             for score in scores:
                 if score.student not in students:
                     students.append(score.student)
             return students
         else:
-            return False
+            return []
 
     def scores(self):
         """ Returns all the scores associated with the current test. """
         if self.has_score():
-            return self.lessontestscore_set.all()
+            return self.lessontestscore_set.all().select_related('student')
         return False
 
 
@@ -320,23 +362,24 @@ class Assignment(models.Model):
         ]
 
     def get_absolute_url(self):
-        return reverse("teachadmin:assignment_detail", kwargs={"subject_pk": self.subject.pk, "pk": self.pk})
+        return reverse("teachadmin:assignment_detail",
+            kwargs={
+                "subject_pk": self.subject.pk,
+                "pk": self.pk}
+            )
 
     def __str__(self):
         return "{}".format(self.name)
 
     def has_score(self):
-        if self.assignmentscore_set.all().count() == 0:
-            return False
-        else:
-            return True
+        return self.assignmentscore_set.all().exists()
     
     def students(self):
         """ Returns UNIQUE students that has scores for the current test. """
 
         if self.has_score():
             students = []
-            scores = self.assignmentscore_set.all()
+            scores = self.assignmentscore_set.all().select_related('student')
             for score in scores:
                 if score.student not in students:
                     students.append(score.student)

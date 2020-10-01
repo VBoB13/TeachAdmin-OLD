@@ -12,7 +12,13 @@ exam = Exam()
 lessontest = LessonTest()
 homework = Homework()
 
-SCORE_MODELS = (assignment, exam, lessontest, homework)
+SINGLE_SCORE_MODELS = (assignment, exam, lessontest, homework)
+
+lesson = Lesson()
+subject = Subject()
+homeroom = HomeRoom()
+
+MULTIPLE_SCORE_MODELS = (lesson, subject, homeroom)
 
 class Graph():
     """ This class is meant to simplify the code for generating graphs
@@ -26,12 +32,17 @@ class Graph():
 
     def __init__(self, model_instance):
         try:
-            for score_model in SCORE_MODELS:
+            for score_model in SINGLE_SCORE_MODELS:
                 if type(model_instance) == type(score_model):
                     self.model = score_model
+            for multiscore_model in MULTIPLE_SCORE_MODELS:
+                if type(model_instance) == type(multiscore_model):
+                    self.model = multiscore_model
+
             self.model_instance = model_instance
             self.df = self._get_dataframe()
             self.uri = self._get_uri()
+
         except TypeError as te:
             print("Cannot establish Graph object.")
             print(te)
@@ -39,10 +50,10 @@ class Graph():
     def __str__(self):
         return "{}: {}".format(self.model, self.model_instance)
 
-    def _create_df(self):
+    def _create_score_df(self):
         students = self.model_instance.students()
         all_scores = self.model_instance.scores()
-        if len(students) != 0 or all_scores != None:
+        if len(students) != 0 and all_scores != None:
             scores_dict = {
                 'Student': [],
                 'Gender': [],
@@ -67,6 +78,39 @@ class Graph():
                 if not df.empty:
                     df['Gender'] = df['Gender'].apply(self._gender_map)
                     return df
+        else:
+            return pd.DataFrame()
+
+    def _create_multiple_score_df(self):
+        object_list = self.model_instance.get_LT_and_HW()
+        if len(object_list) > 0:
+            scores_dict = {
+                'Student': [],
+                'Gender': []
+            }
+            for test_or_hw in object_list:
+                students = test_or_hw.students()
+                all_scores = test_or_hw.scores()
+
+                if '{}'.format(test_or_hw) not in scores_dict.keys():
+                    scores_dict['{}({})'.format(test_or_hw, test_or_hw.pk)] = []
+                
+                for student in students:
+                    if type(test_or_hw) == type(lessontest):
+                        if all_scores.filter(student=student).exists():
+                            if student not in scores_dict['Student']:
+                                scores_dict['Student'].append(student)
+                                scores_dict['Gender'].append(student.gender)
+                            scores_list = []
+                            for score in all_scores.filter(student=student):
+                                scores_list.append(round((score.score/test_or_hw.max_score)*100,1))
+                            scores_dict['{}({})'.format(test_or_hw, test_or_hw.pk)].append(max(scores_list))
+            
+            for key, value in scores_dict.items():
+                print(key, value)
+            
+        return scores_dict
+
 
     def _gender_map(self, gender):
         if gender == 'F':
@@ -77,10 +121,12 @@ class Graph():
             return 'Other'
 
     def _get_dataframe(self):
-        if self.model in SCORE_MODELS:
-            df = self._create_df()
-            return df
         df = pd.DataFrame()
+        if self.model in SINGLE_SCORE_MODELS:
+            df = self._create_score_df()
+        else:
+            A_df = self._create_multiple_score_df()
+
         return df
     
     def _create_uri(self):
