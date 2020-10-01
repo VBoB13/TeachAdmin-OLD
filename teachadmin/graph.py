@@ -12,6 +12,8 @@ exam = Exam()
 lessontest = LessonTest()
 homework = Homework()
 
+SCORE_MODELS = (assignment, exam, lessontest, homework)
+
 class Graph():
     """ This class is meant to simplify the code for generating graphs
         for all the different views in the TeachAdmin application.
