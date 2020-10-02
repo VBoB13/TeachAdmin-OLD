@@ -777,7 +777,7 @@ class LessonDetailView(LoginRequiredMixin, generic.DetailView):
 
         #context['graph'] = self.create_graph()
         graph = Graph(self.object)
-        context['graph'] = False
+        context['graph'] = graph.uri
 
         return context
 

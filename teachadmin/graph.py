@@ -1,5 +1,6 @@
 from .models import *
 import pandas as pd
+import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
@@ -65,9 +66,11 @@ class Graph():
                     score_list.append(score.score)
                 if len(score_list) >= 1:
                     max_score = max(score_list)
-                    scores_dict['Student'].append(student)
-                    scores_dict['Gender'].append(student.gender)
-                    scores_dict['{}'.format(self.model_instance)].append(max_score)
+                else:
+                    max_score = None
+                scores_dict['Student'].append(student)
+                scores_dict['Gender'].append(student.gender)
+                scores_dict['{}'.format(self.model_instance)].append(max_score)
             
             try:
                 df = pd.DataFrame(data=scores_dict)
@@ -82,35 +85,49 @@ class Graph():
             return pd.DataFrame()
 
     def _create_multiple_score_df(self):
-        object_list = self.model_instance.get_LT_and_HW()
-        if len(object_list) > 0:
+        students = self.model_instance.students()
+        score_model_list = self.model_instance.get_score_models()
+        if (len(score_model_list) > 0) and students:
             scores_dict = {
                 'Student': [],
                 'Gender': []
             }
-            for test_or_hw in object_list:
-                students = test_or_hw.students()
-                all_scores = test_or_hw.scores()
-
-                if '{}'.format(test_or_hw) not in scores_dict.keys():
-                    scores_dict['{}({})'.format(test_or_hw, test_or_hw.pk)] = []
+            for score_model in score_model_list:
+                all_scores = score_model.scores()
+                if '{}'.format(score_model) not in scores_dict.keys():
+                    scores_dict['{}({})'.format(score_model, score_model.pk)] = []
                 
                 for student in students:
-                    if type(test_or_hw) == type(lessontest):
+                    if student not in scores_dict['Student']:
+                        scores_dict['Student'].append(student)
+                        scores_dict['Gender'].append(student.gender)
+                    if type(score_model) in (type(lessontest), type(homework)):
                         if all_scores.filter(student=student).exists():
-                            if student not in scores_dict['Student']:
-                                scores_dict['Student'].append(student)
-                                scores_dict['Gender'].append(student.gender)
                             scores_list = []
                             for score in all_scores.filter(student=student):
-                                scores_list.append(round((score.score/test_or_hw.max_score)*100,1))
-                            scores_dict['{}({})'.format(test_or_hw, test_or_hw.pk)].append(max(scores_list))
+                                scores_list.append(round((score.score/score_model.max_score)*100,1))
+                            scores_dict['{}({})'.format(score_model, score_model.pk)].append(max(scores_list))
+                        else:
+                            scores_dict['{}({})'.format(score_model, score_model.pk)].append(None)
             
             for key, value in scores_dict.items():
                 print(key, value)
             
-        return scores_dict
-
+            try:
+                df = pd.DataFrame(data=scores_dict)
+            except Exception as err:
+                print("Couldn't create DataFrame for {}!".format(self.model_instance))
+                print(err)
+                df = pd.DataFrame()
+            else:
+                df['Gender'] = df['Gender'].apply(self._gender_map)
+                avg_scores = []
+                for column in df.select_dtypes(include=['float64']).columns:
+                    avg_scores.append(round(df[column].mean(), 1))
+                df.insert(2, "{} avg.".format(self.model_instance), avg_scores)
+                print(df)
+        
+        return df
 
     def _gender_map(self, gender):
         if gender == 'F':
@@ -125,8 +142,7 @@ class Graph():
         if self.model in SINGLE_SCORE_MODELS:
             df = self._create_score_df()
         else:
-            A_df = self._create_multiple_score_df()
-
+            df = self._create_multiple_score_df()
         return df
     
     def _create_uri(self):
@@ -134,21 +150,32 @@ class Graph():
         fig = plt.figure()
         sns.set_style(style='darkgrid')
         plt.style.use("dark_background")
+        axes = fig.gca()
 
         # Note: Since the seaborn 'swarmplot' wouldn't let me omit either 'x' or 'y' to get the 'hue' shown properly
         # I had to provide 'dummy-data' for the 'x' to make the 'hue' work
         # Link to issue: https://github.com/mwaskom/seaborn/issues/941
-        sns.swarmplot(
-            data=self.df,
-            x=[""]*len(self.df),
-            y='{}'.format(self.model_instance),
-            hue='Gender',
-            palette='deep',
-            size=7,
-            edgecolor='white',
-            linewidth=1
-        )
-        axes = fig.gca()
+        if self.model in SINGLE_SCORE_MODELS:
+            sns.swarmplot(
+                data=self.df,
+                x=[""]*len(self.df),
+                y='{}'.format(self.model_instance),
+                hue='Gender',
+                palette='deep',
+                size=7,
+                edgecolor='white',
+                linewidth=1
+            )
+            axes.legend(title='Gender', loc='center left',
+                        bbox_to_anchor=(1.02, 0.90))
+        else:
+            sns.swarmplot(
+                data=self.df.select_dtypes(include=['float64']),
+                palette='deep',
+                size=7,
+                edgecolor='white',
+                linewidth=1
+            )
         axes.set_ylim(
             (self.df.min(axis=0, numeric_only=True).min())-2,
             (self.df.max(axis=0, numeric_only=True).max())+2
@@ -156,8 +183,6 @@ class Graph():
         plt.setp(axes.get_xticklabels(), rotation=45, ha="right",
                     rotation_mode="anchor")
         axes.set_title("{} scores".format(self.model_instance))
-        axes.legend(title='Gender', loc='center left',
-                    bbox_to_anchor=(1.02, 0.90))
         plt.tight_layout()
 
         # Getting the complete filepath to which we save the graph

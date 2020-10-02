@@ -80,6 +80,10 @@ class Subject(models.Model):
     teacher = models.ManyToManyField(Teacher)
     school = models.ForeignKey(School, blank=True, null=True, on_delete=models.CASCADE)
     homeroom = models.ManyToManyField(HomeRoom)
+    description = models.TextField(
+        max_length=250,
+        blank=True,
+        null=True)
 
     class Meta:
         ordering = [
@@ -92,6 +96,15 @@ class Subject(models.Model):
 
     def get_absolute_url(self):
         return reverse("teachadmin:subject_detail", kwargs={"pk": self.pk})
+    
+    def clean(self):
+        teacher = self.teacher.first()
+        if teacher.subject_set.filter(name__iexact=self.name).exists():
+            raise ValidationError({
+                "name": ValidationError(_("You already have a subject by this name. Choose another one!"), code='invalid')
+            })
+        if self.description == "":
+            self.description = None
 
     def has_exam(self):
         return self.exam_set.all().exists()
@@ -101,7 +114,13 @@ class Subject(models.Model):
     
     def has_lesson(self):
         return self.lesson_set.all().exists()
-
+    
+    def students(self):
+        qs = self.student_set.all()
+        if qs.exists():
+            return qs
+        return False
+            
 
 class Exam(models.Model):
     name = models.CharField(max_length=100, help_text="Anything within 100 characters.")
@@ -196,7 +215,7 @@ class Lesson(models.Model):
             OUTPUT: bool """
         return self.homework_set.all().exists()
     
-    def get_LT_and_HW(self):
+    def get_score_models(self):
         """ This method looks up whether there are any tests or homeworks for the current lesson.
             If there are, it returns a list of the tests and homeworks.
             Returns a list of LessonTests and Homeworks (respectively)
@@ -217,6 +236,9 @@ class Lesson(models.Model):
                     test_hw_list.append(homework)
 
         return test_hw_list
+
+    def students(self):
+        return self.subject.students()
 
 
 class LessonTest(models.Model):
@@ -287,8 +309,7 @@ class LessonTest(models.Model):
                 if score.student not in students:
                     students.append(score.student)
             return students
-        else:
-            return []
+        return []
 
     def scores(self):
         """ Returns all the scores associated with the current test. """
@@ -657,8 +678,6 @@ class HomeworkScore(models.Model):
                 code='invalid'
             )
 
-
-            
         
 
     
