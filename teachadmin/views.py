@@ -1632,7 +1632,9 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
 
         context['view_title'] = view_title
 
-        context['graph'] = self.create_graph()
+        #context['graph'] = self.create_graph()
+        graph = Graph(self.object)
+        context['graph'] = graph.uri
 
         return context
 

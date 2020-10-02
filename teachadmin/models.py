@@ -120,7 +120,28 @@ class Subject(models.Model):
         if qs.exists():
             return qs
         return False
+
+    def get_score_models(self):
+        score_models = []
+        if self.has_exam():
+            exam_qs = self.exam_set.all()
+            for exam in exam_qs:
+                score_models.append(exam)
+
+        if self.has_assignment():
+            assignment_qs = self.assignment_set.all()
+            for assignment in assignment_qs:
+                score_models.append(assignment)
             
+        if self.has_lesson():
+            lessons = self.lesson_set.all()
+            for lesson in lessons:
+                lesson_models_list = lesson.get_score_models()
+                for score_model in lesson_models_list:
+                    score_models.append(score_model)
+        
+        return score_models
+
 
 class Exam(models.Model):
     name = models.CharField(max_length=100, help_text="Anything within 100 characters.")
@@ -173,9 +194,7 @@ class Exam(models.Model):
             return False
 
     def scores(self):
-        if self.has_score():
-            return self.examscore_set.all()
-        return False
+        return self.examscore_set.all().select_related('student')
 
 
 class Lesson(models.Model):
@@ -313,9 +332,7 @@ class LessonTest(models.Model):
 
     def scores(self):
         """ Returns all the scores associated with the current test. """
-        if self.has_score():
-            return self.lessontestscore_set.all().select_related('student')
-        return False
+        return self.lessontestscore_set.all().select_related('student')
 
 
 class Student(models.Model):
@@ -405,15 +422,11 @@ class Assignment(models.Model):
                 if score.student not in students:
                     students.append(score.student)
             return students
-        else:
-            return False
+        return []
 
     def scores(self):
         """ Returns all the scores associated with the current test. """
-        if self.has_score():
-            return self.assignmentscore_set.all()
-        else:
-            return False
+        return self.assignmentscore_set.all().select_related('student')
 
 
 class AssignmentScore(models.Model):
@@ -624,9 +637,7 @@ class Homework(models.Model):
             return False
     
     def scores(self):
-        if self.has_score():
-            return self.homeworkscore_set.all()
-        return False
+        return self.homeworkscore_set.all().select_related('student')
 
 
 class HomeworkScore(models.Model):

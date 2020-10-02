@@ -87,6 +87,7 @@ class Graph():
     def _create_multiple_score_df(self):
         students = self.model_instance.students()
         score_model_list = self.model_instance.get_score_models()
+        df = pd.DataFrame()
         if (len(score_model_list) > 0) and students:
             scores_dict = {
                 'Student': [],
@@ -101,7 +102,7 @@ class Graph():
                     if student not in scores_dict['Student']:
                         scores_dict['Student'].append(student)
                         scores_dict['Gender'].append(student.gender)
-                    if type(score_model) in (type(lessontest), type(homework)):
+                    if type(score_model) in (type(lessontest), type(homework), type(exam), type(assignment)):
                         if all_scores.filter(student=student).exists():
                             scores_list = []
                             for score in all_scores.filter(student=student):
@@ -121,10 +122,6 @@ class Graph():
                 df = pd.DataFrame()
             else:
                 df['Gender'] = df['Gender'].apply(self._gender_map)
-                avg_scores = []
-                for column in df.select_dtypes(include=['float64']).columns:
-                    avg_scores.append(round(df[column].mean(), 1))
-                df.insert(2, "{} avg.".format(self.model_instance), avg_scores)
                 print(df)
         
         return df
@@ -161,8 +158,8 @@ class Graph():
                 x=[""]*len(self.df),
                 y='{}'.format(self.model_instance),
                 hue='Gender',
-                palette='deep',
-                size=7,
+                palette='bright',
+                size=8,
                 edgecolor='white',
                 linewidth=1
             )
@@ -171,8 +168,8 @@ class Graph():
         else:
             sns.swarmplot(
                 data=self.df.select_dtypes(include=['float64']),
-                palette='deep',
-                size=7,
+                palette='bright',
+                size=8,
                 edgecolor='white',
                 linewidth=1
             )
