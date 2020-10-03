@@ -339,94 +339,13 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = 'teachadmin/homeroom_detail.html'
     context_object_name = 'homeroom'
 
-    def create_graph(self):
-        students = self.object.student_set.all()
-        subjects = self.object.subject_set.filter(student__in=students)
-
-        index = []
-        scoresDict = {
-            'Student':[],
-            'Gender':[]
-        }
-        for count, student in enumerate(students):
-            add_score = False
-            if subjects.filter(student=student).count() >= 1:
-                for subject in subjects.filter(student=student):
-                    if subject.has_exam():
-                        for exam in subject.exam_set.all():
-                            if '{}({})'.format(exam.name,exam.pk) not in scoresDict.keys():
-                                scoresDict['{}({})'.format(exam.name, exam.pk)] = []
-                            if exam.has_score() and exam.examscore_set.filter(student=student).count() >= 1:
-                                add_score = True
-                                scorelist = []
-                                for examscore in exam.examscore_set.filter(student=student):
-                                    scorelist.append(examscore.score)
-                                student_exam_max_score = max(scorelist)
-                                scoresDict['{}({})'.format(exam.name, exam.pk)].append(student_exam_max_score)
-                            else:
-                                scoresDict['{}({})'.format(exam.name, exam.pk)].append(None)
-                    if subject.has_assignment():
-                        for assignment in subject.assignment_set.all():
-                            if '{}({})'.format(assignment.name, assignment.pk) not in scoresDict.keys():
-                                scoresDict['{}({})'.format(
-                                    assignment.name, assignment.pk)] = []
-                            if assignment.has_score() and assignment.assignmentscore_set.filter(student=student).count() >= 1:
-                                add_score = True
-                                scorelist = []
-                                for assignmentscore in assignment.assignmentscore_set.filter(student=student):
-                                    scorelist.append(assignmentscore.score)
-                                student_assignment_max_score = max(scorelist)
-                                scoresDict['{}({})'.format(
-                                    assignment.name, assignment.pk)].append(student_assignment_max_score)
-                            else:
-                                scoresDict['{}({})'.format(
-                                    assignment.name, assignment.pk)].append(None)
-                    if subject.has_lesson():
-                        for lesson in subject.lesson_set.all():
-                            if lesson.has_lessontest():
-                                for lessontest in lesson.lessontest_set.all():
-                                    if '{}({})'.format(lessontest.name, lessontest.pk) not in scoresDict.keys():
-                                        scoresDict['{}({})'.format(lessontest.name, lessontest.pk)] = []
-                                    if lessontest.has_score() and lessontest.lessontestscore_set.filter(
-                                        student=student).count() >= 1:
-                                        add_score = True
-                                        scorelist = []
-                                        for lessontestscore in lessontest.lessontestscore_set.filter(student=student):
-                                            scorelist.append(lessontestscore.score)
-                                        student_lessontest_max_score = max(scorelist)
-                                        scoresDict['{}({})'.format(
-                                            lessontest.name, lessontest.pk)].append(student_lessontest_max_score)
-                                    else:
-                                        scoresDict['{}({})'.format(
-                                            lessontest.name, lessontest.pk)].append(None)
-                            if lesson.has_homework():
-                                for homework in lesson.homework_set.all():
-                                    if '{}({})'.format(homework.name, homework.pk) not in scoresDict.keys():
-                                        scoresDict['{}({})'.format(
-                                            homework.name, homework.pk)] = []
-                                    if homework.has_score() and homework.homeworkscore_set.filter(
-                                        student=student).count() >= 1:
-                                        add_score = True
-                                        scorelist = []
-                                        for homeworkscore in homework.homeworkscore_set.filter(student=student):
-                                            scorelist.append(homeworkscore.score)
-                                        student_homework_max_score = max(scorelist)
-                                        scoresDict['{}({})'.format(
-                                            homework.name, homework.pk)].append(student_homework_max_score)
-                                    else:
-                                        scoresDict['{}({})'.format(
-                                            homework.name, homework.pk)].append(None)
-            if add_score:
-                index.append(count)
-                scoresDict['Student'].append(student)
-
-        print(scoresDict)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['teacher'] = get_object_or_404(Teacher, user=self.request.user)
         context['subject'] = True
-        self.create_graph()
+
+        graph = Graph(self.object)
+        context['graph'] = graph.uri
 
         return context
     

@@ -88,7 +88,7 @@ class Graph():
         students = self.model_instance.students()
         score_model_list = self.model_instance.get_score_models()
         df = pd.DataFrame()
-        if (len(score_model_list) > 0) and students:
+        if (len(score_model_list) > 0) and students.exists():
             scores_dict = {
                 'Student': [],
                 'Gender': []

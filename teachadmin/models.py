@@ -66,14 +66,29 @@ class HomeRoom(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("teachadmin:homeroom_detail", kwargs={"pk": self.pk})
+        return reverse("teachadmin:homeroom_detail",
+            kwargs={
+                "pk": self.pk
+                })
 
-    def has_students(self):
-        return self.student_set.all().exists()
-        
-    def has_subject(self):
-        return self.subject_set.all().exists()
+    def students(self):
+        """ Returns a QuerySet of all the students linked to the current HomeRoom. """
+        return self.student_set.all()
     
+    def subjects(self):
+        """ Returns a QuerySet of all the subjects linked to the current HomeRoom. """
+        return self.subject_set.all()
+
+    def get_score_models(self):
+        """ Returns a list of score models (Exam, Assignment, LessonTest, Homework)
+            that are linked to the current HomeRoom """
+        score_model_list = []
+        qs = self.subjects()
+        if qs.exists():
+            for subject in qs:
+                score_model_list.extend(subject.get_score_models())
+        return score_model_list
+
 
 class Subject(models.Model):
     name = models.CharField(max_length=50, help_text="Anything within 50 characters.")
@@ -116,10 +131,7 @@ class Subject(models.Model):
         return self.lesson_set.all().exists()
     
     def students(self):
-        qs = self.student_set.all()
-        if qs.exists():
-            return qs
-        return False
+        return self.student_set.all()
 
     def get_score_models(self):
         score_models = []
