@@ -493,7 +493,7 @@ class ExamScore(models.Model):
             })
 
     def clean(self):
-        # First we check to see whether the chosen student DON'T have any scores for the exam
+        # First we check to see whether the chosen student DO NOT have any scores for the exam
         if self.student not in self.exam.students():
         # Do not allow scores to be set higher than exam's max_score
             if self.score > self.exam.max_score:

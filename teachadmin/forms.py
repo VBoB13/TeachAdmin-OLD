@@ -90,7 +90,12 @@ class ExamForm(forms.ModelForm):
 class ExamScoreForm(forms.ModelForm):
     class Meta:
         model = ExamScore
-        fields = ['score']
+        fields = ['score', 'student']
+
+    def __init__(self, *args, **kwargs):
+        subject = kwargs.pop('subject', None)
+        super().__init__(*args, **kwargs)
+        self.fields['student'].queryset = subject.student_set.all()
 
 
 class LessonForm(forms.ModelForm):

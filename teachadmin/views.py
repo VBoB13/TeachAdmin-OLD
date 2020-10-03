@@ -232,6 +232,12 @@ class ExamScoreCreateView(LoginRequiredMixin, generic.CreateView):
     model = ExamScore
     form_class = forms.ExamScoreForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
+        kwargs['subject'] = subject
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
