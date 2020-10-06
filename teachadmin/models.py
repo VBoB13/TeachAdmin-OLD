@@ -656,7 +656,10 @@ class HomeworkScore(models.Model):
     score = models.PositiveSmallIntegerField()
     homework = models.ForeignKey(Homework, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    turn_in_date = models.DateTimeField(auto_now_add=True)
+    turn_in_time = models.DateTimeField(
+        default=timezone.now,
+        help_text="Format: YYYY-MM-DD HH:MM:SS"
+    )
 
     class Meta:
         ordering = [

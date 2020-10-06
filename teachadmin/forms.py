@@ -66,7 +66,15 @@ class HomeworkForm(forms.ModelForm):
 class HomeworkScoreForm(forms.ModelForm):
     class Meta:
         model = HomeworkScore
-        exclude = ['student',]
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        subject = kwargs.pop('subject', None)
+        homework = kwargs.pop('homework', None)
+        super().__init__(*args, **kwargs)
+        self.fields['student'].queryset = subject.student_set.all()
+        self.fields['homework'].queryset = Homework.objects.filter(pk=homework.pk)
+        self.fields['homework'].empty_label = None
 
 
 class SubjectForm(forms.ModelForm):
@@ -113,7 +121,7 @@ class LessonTestForm(forms.ModelForm):
 class LessonTestScoreForm(forms.ModelForm):
     class Meta:
         model = LessonTestScore
-        fields = ('score', 'lessonTest')
+        fields = '__all__'
 
 
 class BehaviorTypeForm(forms.ModelForm):

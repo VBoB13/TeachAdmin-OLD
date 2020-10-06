@@ -561,23 +561,29 @@ class HomeworkDeleteView(LoginRequiredMixin, generic.DeleteView):
 
 class HomeworkScoreCreateView(LoginRequiredMixin, generic.CreateView):
     login_url = 'teachadmin/login/'
-    redirect_field_name = 'teachadmin/index.html'
+    redirect_field_name = 'teachadmin/homeworkscore_form.html'
 
     model = HomeworkScore
     form_class = forms.HomeworkScoreForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        
+        subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
+        kwargs['subject'] = subject
+
+        homework = get_object_or_404(Homework, pk=self.kwargs.get('homework_pk'))
+        kwargs['homework'] = homework
+
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         view_title = 'Add homework score'
-
-        if self.kwargs.get('homework_pk'):
-            homework = get_object_or_404(Homework, pk=self.kwargs.get('homework_pk'))
-            subject = homework.lesson.subject
-            form = forms.HomeworkScoreForm(initial={"homework":homework})
-            context['form'] = form
-            context['subject'] = subject
-
+        subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
+        
+        context['subject'] = subject
         context['view_title'] = view_title
 
         return context

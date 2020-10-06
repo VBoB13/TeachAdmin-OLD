@@ -14,17 +14,6 @@
     <form method="POST">
         {% csrf_token %}
         {% bootstrap_form form %}
-        {% for student in subject.student_set.all %}
-            {% if forloop.first %}
-                <p>
-                <label for="students_select">Student</label>
-                <select name="student" id="students_select" class="form-control">
-            {% endif %}
-            <option value="{{ student.pk }}">{{ student }}</option>
-            {% if forloop.last %}
-                </p></select>
-            {% endif %}
-        {% endfor %}
         <p>
             <input type="submit" value="Add score" class="btn btn-primary">
         </p>
