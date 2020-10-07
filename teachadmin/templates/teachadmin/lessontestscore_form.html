@@ -15,14 +15,6 @@
     <form method="POST">
         {% csrf_token %}
         {% bootstrap_form form %}
-        {% if not form.instance.pk %}
-            <label for="lessontestscore_students">Student</label><br>
-            <select name="students" id="lessontestscore_students" class="form-control">
-                {% for student in lessontest.lesson.subject.student_set.all %}
-                    <option value="{{ student.pk }}">{{ student }}</option>
-                {% endfor %}
-            </select><br><br>
-        {% endif %}
         <input type="submit" value="{% if form.instance.pk %}Update{% else %}Add{% endif %} score" class="btn btn-primary">
     </form>
 {% endblock content_block %}

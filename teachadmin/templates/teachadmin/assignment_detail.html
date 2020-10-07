@@ -25,7 +25,7 @@
             {% empty %}
                 <h6 class="text-muted">No scores in {{ assignment }} yet.</h6>
             {% endfor %}
-            <h6><strong><a href="{% url 'teachadmin:subject_add_assignment' assignment.subject.pk %}">Add score</a></strong></h6>
+            <h6><strong><a href="{% url 'teachadmin:assignment_add_score' assignment.subject.pk assignment.pk %}">Add score</a></strong></h6>
         </div>
         <div class="col-8">
             {% if graph %}

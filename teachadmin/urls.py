@@ -175,7 +175,10 @@ subject_patterns = [
         name='assignment_update'),
     path('<int:subject_pk>/assignments/<int:pk>/delete/',
         views.AssignmentDeleteView.as_view(),
-        name='assignment_delete')
+        name='assignment_delete'),
+    path('<int:subject_pk>/assignment/<int:assignment_pk>/add_score/',
+        views.AssignmentScoreCreateView.as_view(),
+        name='assignment_add_score')
 ]
 
 teacher_patterns = [

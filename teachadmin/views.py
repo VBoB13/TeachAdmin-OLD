@@ -110,7 +110,37 @@ class AssignmentUpdateView(LoginRequiredMixin, generic.UpdateView):
         view_title = "Update {}".format(self.object)
         context["view_title"] = view_title
         return context
-    
+
+
+class AssignmentScoreCreateView(LoginRequiredMixin, generic.CreateView):
+    login_url = 'teachadmin/login.'
+    redirect_field_name = 'teachadmin/assignmentscore_form.html'
+
+    model = AssignmentScore
+    form_class = forms.AssignmentScoreForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        
+        assignment = get_object_or_404(
+            Assignment, pk=self.kwargs.get('assignment_pk'))
+        kwargs['assignment'] = assignment
+
+        return kwargs
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        assignment = get_object_or_404(Assignment, pk=self.kwargs.get('assignment_pk'))
+        context['assignment'] = assignment
+
+        view_title = "Add score to"
+        context['view_title'] = view_title
+
+        return context
+
+
 
 class ExamListView(LoginRequiredMixin, generic.ListView):
     login_url = 'teachadmin/login/'
@@ -864,6 +894,15 @@ class LessonTestScoreCreateView(LoginRequiredMixin, generic.CreateView):
     model = LessonTestScore
     form_class = forms.LessonTestScoreForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        
+        kwargs['subject'] = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
+        kwargs['lessontest'] = get_object_or_404(LessonTest, pk=self.kwargs.get('lessontest_pk'))
+
+        return kwargs
+
+
     def form_valid(self, form):
         if self.request.POST.get('students'):
             student = Student.objects.get(pk=self.request.POST.get('students'))
@@ -876,12 +915,10 @@ class LessonTestScoreCreateView(LoginRequiredMixin, generic.CreateView):
 
         self.view_title = "New score"
 
-        if self.kwargs.get('lessontest_pk'):
-            lessontest = get_object_or_404(LessonTest, pk=self.kwargs.get('lessontest_pk'))
-            form = forms.LessonTestScoreForm(initial={"lessonTest":lessontest})
-            context['form'] = form
-            context['lessontest'] = lessontest
-            self.view_title += " for {}".format(lessontest)
+        lessontest = get_object_or_404(LessonTest, pk=self.kwargs.get('lessontest_pk'))
+        context['lessontest'] = lessontest
+        
+        self.view_title += " for {}".format(lessontest)
 
         context['view_title'] = self.view_title
 

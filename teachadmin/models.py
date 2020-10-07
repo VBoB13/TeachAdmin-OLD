@@ -215,9 +215,13 @@ class Lesson(models.Model):
     start_date = models.DateField(
         verbose_name="Start date",
         null=True,
-        default=datetime.date.today())
-    end_date = models.DateField(verbose_name="End date",
-        null=True, blank=True)
+        default=datetime.date.today()
+    )
+    end_date = models.DateField(
+        verbose_name="End date",
+        null=True,
+        blank=True
+    )
 
     class Meta:
         ordering = [
@@ -400,7 +404,9 @@ class Assignment(models.Model):
     name = models.CharField(max_length=50)
     max_score = models.PositiveSmallIntegerField(default=100)
     min_score = models.PositiveSmallIntegerField(default=0)
-    deadline = models.DateTimeField(auto_now_add=True)
+    deadline = models.DateTimeField(
+        default=timezone.now,
+        help_text="Format: YYYY-MM-DD HH:MM:SS")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     creator = models.ManyToManyField(Teacher)
 
@@ -442,13 +448,15 @@ class Assignment(models.Model):
 
 
 class AssignmentScore(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
     score = models.PositiveSmallIntegerField()
-    turn_in_date = models.DateTimeField(auto_now_add=True)
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    turn_in_time = models.DateTimeField(
+        default=timezone.now,
+        help_text="Format: YYYY-MM-DD HH:MM:SS")
 
     class Meta:
-        ordering = ['assignment', 'turn_in_date', 'score']
+        ordering = ['assignment', 'turn_in_time', 'score']
 
     def __str__(self):
         if self.assignment.min_score == 0 and self.assignment.max_score == 100:
