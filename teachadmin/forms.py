@@ -44,6 +44,14 @@ class AssignmentForm(forms.ModelForm):
         model = Assignment
         fields = '__all__'
 
+    def __init__(self, *args, **kwargs):
+        subject = kwargs.pop('subject', None)
+        teacher = kwargs.pop('teacher', None)
+        super().__init__(*args, **kwargs)
+        self.fields['subject'].queryset = Subject.objects.filter(pk=subject.pk)
+        self.fields['subject'].empty_label = None
+        self.initial['creator'] = teacher
+
 
 class AssignmentScoreForm(forms.ModelForm):
     class Meta:

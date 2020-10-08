@@ -68,25 +68,29 @@ class AssignmentDeleteView(LoginRequiredMixin, generic.DeleteView):
 
 class AssignmentCreateView(LoginRequiredMixin, generic.CreateView):
     login_url = 'teachadmin/login/'
-    redirect_field_name = 'teachadmin/index.html'
+    redirect_field_name = 'teachadmin/assignment_form.html'
     
     model = Assignment
     form_class = forms.AssignmentForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        
+        subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
+        kwargs['subject'] = subject
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        kwargs['teacher'] = teacher
+
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        view_title = "Add Assignment"
+        subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
+        view_title = "Add Assignment to {}".format(subject)
 
-        if self.kwargs.get('subject_pk'):
-            subject = get_object_or_404(Subject, pk=self.kwargs['subject_pk'])
-            teacher = get_object_or_404(Teacher, user=self.request.user)
-            form = forms.AssignmentForm(initial={"subject":subject, "teacher":teacher})
-            context['form'] = form
-
-            view_title += " to {}".format(subject)
-            context['view_title'] = view_title
-
+        context['view_title'] = view_title
+        context['subject'] = subject
 
         return context
 
@@ -139,7 +143,6 @@ class AssignmentScoreCreateView(LoginRequiredMixin, generic.CreateView):
         context['view_title'] = view_title
 
         return context
-
 
 
 class ExamListView(LoginRequiredMixin, generic.ListView):
