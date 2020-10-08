@@ -131,7 +131,7 @@ class ExamScoreForm(forms.ModelForm):
 class LessonForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ('name', 'subject')
+        exclude = ('subject',)
 
 
 class LessonTestForm(forms.ModelForm):

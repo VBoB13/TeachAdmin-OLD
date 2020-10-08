@@ -156,12 +156,22 @@ class Subject(models.Model):
 
 
 class Exam(models.Model):
-    name = models.CharField(max_length=100, help_text="Anything within 100 characters.")
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    
-    max_score = models.PositiveSmallIntegerField(default=100, help_text="Default: 100")
-    min_score = models.PositiveSmallIntegerField(default=0, help_text="Default: 0")
-    date = models.DateField(blank=True)
+    name = models.CharField(
+        max_length=100,
+        help_text="Anything within 100 characters.")
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE)
+    max_score = models.PositiveSmallIntegerField(
+        default=100,
+        help_text="Default: 100")
+    min_score = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="Default: 0")
+    date = models.DateField(
+        blank=True,
+        default=datetime.date.today,
+        help_text="Format: YYYY-MM-DD")
 
     class Meta:
         ordering = [
@@ -210,17 +220,21 @@ class Exam(models.Model):
 
 
 class Lesson(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(
+        max_length=30,
+        help_text="Within 30 characters.")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     start_date = models.DateField(
         verbose_name="Start date",
         null=True,
-        default=datetime.date.today()
+        default=datetime.date.today,
+        help_text="Format: YYYY-MM-DD"
     )
     end_date = models.DateField(
         verbose_name="End date",
         null=True,
-        blank=True
+        blank=True,
+        help_text="Format: YYYY-MM-DD"
     )
 
     class Meta:

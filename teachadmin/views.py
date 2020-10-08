@@ -203,7 +203,7 @@ class ExamCreateView(LoginRequiredMixin, generic.CreateView):
 
 
     def form_valid(self, form):
-        subject = get_object_or_404(Subject, pk=self.kwargs['subject_pk'])
+        subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
         form.instance.subject = subject
         form.save()
         return super().form_valid(form)
@@ -768,6 +768,11 @@ class LessonCreateView(LoginRequiredMixin, generic.CreateView):
         context['view_title'] = view_title
 
         return context
+
+    def form_valid(self, form):
+        subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
+        form.instance.subject = subject
+        return super().form_valid(form)
 
 
 class LessonUpdateView(LoginRequiredMixin, generic.UpdateView):
