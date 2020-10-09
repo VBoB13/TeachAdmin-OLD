@@ -192,7 +192,7 @@ class Exam(models.Model):
     def clean(self):
         all_exams_in_subject = self.subject.exam_set.all()
         for exam in all_exams_in_subject:
-            if self.name == exam.name:
+            if not self.pk and self.name == exam.name:
                 raise ValidationError({
                     "name": ValidationError(_("Exam name already exists. Try another name."), code='invalid')
                 })

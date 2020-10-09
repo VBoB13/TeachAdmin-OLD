@@ -114,7 +114,14 @@ class SubjectToStudentForm(forms.ModelForm):
 class ExamForm(forms.ModelForm):
     class Meta:
         model = Exam
-        exclude = ['subject',]
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        subject_pk = kwargs.pop('subject_pk', None)
+        super().__init__(*args, **kwargs)
+        if subject_pk:
+            self.fields['subject'].queryset = Subject.objects.filter(pk=subject_pk)
+        self.fields['subject'].empty_label = None
 
 
 class ExamScoreForm(forms.ModelForm):
@@ -126,6 +133,7 @@ class ExamScoreForm(forms.ModelForm):
         subject = kwargs.pop('subject', None)
         super().__init__(*args, **kwargs)
         self.fields['student'].queryset = subject.student_set.all()
+        self.fields['student'].empty_label = None
 
 
 class LessonForm(forms.ModelForm):

@@ -187,31 +187,38 @@ class ExamCreateView(LoginRequiredMixin, generic.CreateView):
     model = Exam
     form_class = forms.ExamForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+
+        subject_pk = self.kwargs['subject_pk']
+        kwargs['subject_pk'] = subject_pk
+
+        return kwargs
+
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         view_title = "Add exam"
-
-        if self.kwargs.get('subject_pk'):
-            subject = get_object_or_404(Subject, pk=self.kwargs['subject_pk'])
-            context['subject'] = subject
-            view_title += " to {}".format(subject)
-
+        
+        subject = get_object_or_404(Subject, pk=self.kwargs['subject_pk'])
+        context['subject'] = subject
+        
+        view_title += " to {}".format(subject)
         context['view_title'] = view_title
 
         return context
 
-
     def form_valid(self, form):
         subject = get_object_or_404(Subject, pk=self.kwargs.get('subject_pk'))
         form.instance.subject = subject
-        form.save()
+        self.object = form.save(commit=False)
         return super().form_valid(form)
 
 
 class ExamDeleteView(LoginRequiredMixin, generic.DeleteView):
     login_url = 'teachadmin/login/'
-    redirect_field_name = 'teachadmin/subject_list.html'
+    redirect_field_name = 'teachadmin/exam_confirm_delete.html'
 
     model = Exam
     success_url = reverse_lazy('teachadmin:subject_list')
