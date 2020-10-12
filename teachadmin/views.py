@@ -488,18 +488,28 @@ class HomeRoomUpdateView(LoginRequiredMixin, generic.UpdateView):
                         print("Student ({}) already has a homeroom.".format(student))
 
         return super().form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+
+        kwargs['teacher'] = get_object_or_404(Teacher, user=self.request.user)
+        kwargs['homeroom'] = self.object
+
+        return kwargs
     
     def get_context_data(self):
         context = super().get_context_data()
         
-        self.view_title = 'Update Homeroom'
-        context['view_title'] = self.view_title
-
         teacher = get_object_or_404(Teacher, user=self.request.user)
         context['teacher'] = teacher
+        
         if self.form_class == forms.HomeRoomAddSubjectForm:
             context['subject'] = self.kwargs.get('subject')
+            self.view_title = 'Add Subjects to {}'.format(self.object)
+        else:
+            self.view_title = 'Update Homeroom'
             
+        context['view_title'] = self.view_title
         
         available_students = Student.objects.filter(teacher=teacher)
         context['available_students'] = available_students
@@ -1015,6 +1025,13 @@ class SchoolDetailView(LoginRequiredMixin, generic.DetailView):
     model = School
     template_name = 'teachadmin/school_detail.html'
     context_object_name = 'school'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["homerooms"] = self.object.homeroom_set.all()
+        context["subjects"] = self.object.subject_set.all()
+        return context
+    
 
 
 class SchoolCreateView(LoginRequiredMixin, generic.CreateView):
@@ -1678,6 +1695,13 @@ class SubjectUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     template_name = "teachadmin/subject_update.html"
     context_object_name = "subject"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        teacher = get_object_or_404(Teacher, user=self.request.user)
+        kwargs['teacher'] = teacher
+        kwargs['subject'] = self.object
+        return kwargs
 
     def form_valid(self, form):
         subject = form.save()

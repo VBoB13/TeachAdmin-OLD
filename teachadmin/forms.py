@@ -77,6 +77,18 @@ class HomeRoomAddSubjectForm(forms.ModelForm):
     class Meta:
         model = HomeRoom
         fields = ('name',)
+    
+    subjects = forms.ModelMultipleChoiceField(queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        teacher = kwargs.pop('teacher', None)
+        homeroom = kwargs.pop('homeroom', None)
+        super().__init__(*args, **kwargs)
+        if teacher and homeroom:
+            self.fields['subjects'].queryset = teacher.subject_set.all()
+            self.fields['subjects'].initial = [s.pk for s in homeroom.subject_set.all()]
+            self.fields['subjects'].empty_label = None
+            self.fields['subjects'].help_text = "Ctrl + Left-Click for selecting and de-selecting Subjects."
 
 
 class HomeworkForm(forms.ModelForm):
@@ -103,6 +115,17 @@ class SubjectForm(forms.ModelForm):
     class Meta:
         model = Subject
         fields = ['name']
+
+    students = forms.ModelMultipleChoiceField(queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        subject = kwargs.pop('subject', None)
+        teacher = kwargs.pop('teacher', None)
+        super().__init__(*args, **kwargs)
+        if teacher and subject:
+            self.fields['students'].queryset = teacher.student_set.all()
+            self.fields['students'].initial = [s.pk for s in subject.student_set.all()]
+        self.fields['students'].empty_label = None
 
 
 class SubjectToStudentForm(forms.ModelForm):

@@ -14,26 +14,6 @@
     <form method="POST">
         {% csrf_token %}
         {% bootstrap_form form %}
-        
-        {% for student in teacher.student_set.all %}
-            {% if forloop.first %}
-                <select name="added_students" id="selected_students" class="form-control" multiple>
-            {% endif %}
-            
-            <option value="{{ student.pk }}" 
-                {% if student in subject_students %}
-                    selected>{{ student }}</option>
-                {% else %}
-                    >{{ student }}</option>
-                {% endif %}
-
-            {% if forloop.last %}
-                </select>
-                <p><small class="form-text text-muted">Ctrl + Right-Click to select multiple students.</small></p>
-            {% endif %}
-        {% empty %}
-
-        {% endfor %}
         <input type="submit" class="btn btn-primary" value="Update">
     </form>
 {% endblock content_block %}

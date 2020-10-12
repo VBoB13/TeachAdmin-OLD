@@ -15,20 +15,7 @@
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% bootstrap_form form %}
-                {% if subject %}
-                    <p>
-                    <select name="selected_subjects" class='form-control' multiple>
-                    {% for subject in teacher.subject_set.all %}
-                        <option value="{{ subject.pk }}" 
-                        {% if subject in homeroom.subject_set.all %}
-                            selected>{{ subject }}</option>
-                        {% else %}
-                            >{{ subject }}</option>
-                        {% endif %}
-                    {% endfor %}
-                    </select>
-                    </p>
-                {% else %}
+                {% if not subject %}
                     <p>
                         <input type="file" name="homeroomfile" class="form-control-file">
                         <small class="form-text text-muted">CSV-files (.csv) only</small>
