@@ -72,6 +72,13 @@ class HomeRoomForm(forms.ModelForm):
         model = HomeRoom
         exclude = ('teacher', 'created_by')
 
+    def __init__(self, *args, **kwargs):
+        teacher = kwargs.pop('teacher', False)
+        super().__init__(*args, **kwargs)
+        if teacher:
+            self.fields['school'].queryset = teacher.school_set.all()
+            self.fields['school'].empty_label = None
+
 
 class HomeRoomAddSubjectForm(forms.ModelForm):
     class Meta:
@@ -89,6 +96,23 @@ class HomeRoomAddSubjectForm(forms.ModelForm):
             self.fields['subjects'].initial = [s.pk for s in homeroom.subject_set.all()]
             self.fields['subjects'].empty_label = None
             self.fields['subjects'].help_text = "Ctrl + Left-Click for selecting and de-selecting Subjects."
+
+
+class HomeRoomAddStudentForm(forms.ModelForm):
+    class Meta:
+        model = HomeRoom
+        fields = ('name',)
+
+    students = forms.ModelMultipleChoiceField(queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        teacher = kwargs.pop('teacher', None)
+        homeroom = kwargs.pop('homeroom', None)
+        super().__init__(*args, **kwargs)
+        if teacher and homeroom:
+            self.fields['students'].queryset = teacher.student_set.exclude(homeroom=homeroom)
+            self.fields['students'].empty_label = None
+            self.fields['students'].help_text = "Ctrl + Left-Click to select and de-select students."
 
 
 class HomeworkForm(forms.ModelForm):

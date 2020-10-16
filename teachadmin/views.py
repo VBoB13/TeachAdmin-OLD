@@ -388,7 +388,8 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['teacher'] = get_object_or_404(Teacher, user=self.request.user)
-        context['subject'] = True
+        context['subject_update'] = True
+        context['student_update'] = True
 
         graph = Graph(self.object)
         context['graph'] = graph.uri
@@ -428,10 +429,14 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
         else:
             print("Try with a POST-reqest next time.")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['teacher'] = get_object_or_404(Teacher, user=self.request.user)
+        return kwargs
 
     def form_valid(self, form):
+        
         teacher = get_object_or_404(Teacher, user=self.request.user)
-
         homeroom = form.save()
         teacher.homeroom_set.add(homeroom)
 
@@ -465,17 +470,28 @@ class HomeRoomUpdateView(LoginRequiredMixin, generic.UpdateView):
     context_object_name = 'homeroom'
 
     def dispatch(self, request, *args, **kwargs):
-        if kwargs.get('subject'):
+        if kwargs.get('subject_update'):
             self.form_class = forms.HomeRoomAddSubjectForm
+        elif kwargs.get('student_update'):
+            self.form_class = forms.HomeRoomAddStudentForm
+        else:
+            pass
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         homeroom = form.save()
         if self.form_class == forms.HomeRoomAddSubjectForm:
-            for subject in Subject.objects.filter(pk__in=self.request.POST.getlist('selected_subjects')):
+            for subject in Subject.objects.filter(pk__in=form.cleaned_data.get('subjects')):
                 homeroom.subject_set.add(subject)
-                if homeroom.has_students():
+                if homeroom.students().exists():
                     for student in homeroom.student_set.all():
+                        subject.student_set.add(student)
+        elif self.form_class == forms.HomeRoomAddStudentForm:
+            for student in Student.objects.filter(pk__in=form.cleaned_data.get('students')):
+                homeroom.student_set.add(student)
+                homeroom_subjects = homeroom.subjects()
+                if homeroom_subjects.exists():
+                    for subject in homeroom_subjects:
                         subject.student_set.add(student)
         else:
             students = Student.objects.filter(pk__in=self.request.POST.getlist('selected_students'))
@@ -491,9 +507,10 @@ class HomeRoomUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-
         kwargs['teacher'] = get_object_or_404(Teacher, user=self.request.user)
-        kwargs['homeroom'] = self.object
+        
+        if self.form_class == forms.HomeRoomAddSubjectForm or self.form_class == forms.HomeRoomAddStudentForm:
+            kwargs['homeroom'] = self.object
 
         return kwargs
     
@@ -504,8 +521,11 @@ class HomeRoomUpdateView(LoginRequiredMixin, generic.UpdateView):
         context['teacher'] = teacher
         
         if self.form_class == forms.HomeRoomAddSubjectForm:
-            context['subject'] = self.kwargs.get('subject')
+            context['subject_update'] = self.kwargs.get('subject_update')
             self.view_title = 'Add Subjects to {}'.format(self.object)
+        elif self.form_class == forms.HomeRoomAddStudentForm:
+            context['student_update'] = self.kwargs.get('student_update')
+            self.view_title = 'Add students to {}'.format(self.object)
         else:
             self.view_title = 'Update Homeroom'
             
@@ -1032,7 +1052,6 @@ class SchoolDetailView(LoginRequiredMixin, generic.DetailView):
         context["subjects"] = self.object.subject_set.all()
         return context
     
-
 
 class SchoolCreateView(LoginRequiredMixin, generic.CreateView):
     login_url = 'teachadmin/login/'
@@ -2036,7 +2055,6 @@ def addAssignment(request, student_class_id):
 
     return HttpResponseRedirect(reverse('teachadmin:studentsView',
                                                     args=(studentClass.pk,)))
-
 
 def gender_map(gender):
     if gender == 'F':

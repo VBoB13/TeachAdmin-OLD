@@ -41,7 +41,7 @@
                     <strong style="margin-left:10px" class="text-muted">No subjects assigned to this homeroom yet.</strong>
                 </p>
             {% endfor %}
-            <p><strong><a href="{% url 'teachadmin:homeroom_update' homeroom.pk subject %}">
+            <p><strong><a href="{% url 'teachadmin:homeroom_update_subject' homeroom.pk subject_update %}">
             <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
             </svg>
@@ -50,14 +50,14 @@
                 <div style="margin:10px" class="list-group">
                     {% for student in homeroom.student_set.all %}
                         <a href="{% url 'teachadmin:student_detail' student.pk %}" 
-                        class="list-group-item list-group-item-action list-group-item-dark">
+                        class="list-group-item list-group-item-dark list-group-item-action">
                             <strong>{{ student }}</strong>
                         </a>
                     {% empty %}
                         <h3 class="text-muted">No students in this homeroom yet...</h3>
                     {% endfor %}
                 </div>
-            <strong><a href="{% url 'teachadmin:homeroom_update' homeroom.pk %}">
+            <strong><a href="{% url 'teachadmin:homeroom_update_student' homeroom.pk student_update %}">
                 <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-plus-circle-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path fill-rule="evenodd" d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4a.5.5 0 0 0-1 0v3.5H4a.5.5 0 0 0 0 1h3.5V12a.5.5 0 0 0 1 0V8.5H12a.5.5 0 0 0 0-1H8.5V4z"/>
                 </svg>

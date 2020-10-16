@@ -27,7 +27,8 @@
             </form>
         </div>
         <div class="col-4">
-            {% if not subject %}
+            {% if not subject_update %}
+            {% if not student_update %}
                 <h3><u>Info:</u></h3>
                 <p class="text-justify" style="margin-top:20px">
                     <strong><a href="{% static 'teachadmin/homerooms/csv templates/students-template.csv' %}">
@@ -42,6 +43,7 @@
                     Meanwhile, please try to follow <a href=""><strong>this format</strong></a> when creating your file (.csv).<br>
                     If that's too vague of a show case, please read <strong><a href="">this guide</a></strong> for more information.
                 </p>
+            {% endif %}
             {% endif %}
         </div>
     </div>

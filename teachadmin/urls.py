@@ -20,9 +20,12 @@ homeroom_patterns = [
     path('<int:pk>/update/',
         views.HomeRoomUpdateView.as_view(),
         name='homeroom_update'),
-    path('<int:pk>/update/<subject>/',
+    path('<int:pk>/update_subject/<subject_update>/',
         views.HomeRoomUpdateView.as_view(),
-        name='homeroom_update')
+        name='homeroom_update_subject'),
+    path('<int:pk>/update_student/<student_update>/',
+        views.HomeRoomUpdateView.as_view(),
+        name='homeroom_update_student'),
 ]
 
 school_patterns = [
