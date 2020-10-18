@@ -3,16 +3,16 @@
 {% block content_block %}
 
 <div class="jumbotron bg-secondary">
-    <p><h1>Login</h1><p>
+    <p><h1 class="display-4">Login</h1><p>
     <form action="{% url 'teachadmin:login' %}" method="POST" class="form">
         {% csrf_token %}
         <label for="username">Username:</label>
-        <input type="text" name="username" placeholder="Enter Username">
+        <input type="text" name="username" placeholder="Enter Username" class="form-control">
 
         <label for="password">Password:</label>
-        <input type="password" name="password">
+        <input type="password" name="password" class="form-control">
 
-        <input type="submit" name="" value="Login">
+        <br><input type="submit" name="" value="Login" class="btn btn-primary">
     </form>
 </div>
 

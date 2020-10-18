@@ -859,6 +859,8 @@ class LessonTestDetailView(LoginRequiredMixin, generic.DetailView):
         if graph.uri != False:
             context['graph'] = graph.uri
 
+        context['scores'] = self.object.scores()
+
         return context
 
 
@@ -1391,25 +1393,8 @@ class StudentDetailView(LoginRequiredMixin, generic.DetailView):
         return file_exists
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        self.exam_scores = ExamScore.objects.filter(
-            student=self.object
-        )
-        self.assignment_scores = AssignmentScore.objects.filter(
-            student=self.object
-        )
-        context['exam_scores'] = self.exam_scores
-        context['assignment_scores'] = self.assignment_scores
-
-        if self.exam_scores.count() > 0 and self.assignment_scores.count() > 0:
-            pass
-            # Re-write the method
-            #context['file_exists'] = self.get_student_graph()    
-
-        if self.object.subject != None:
-            context['subjects'] = self.object.subject.all()
-
+        context = super().get_context_data(**kwargs)    
+        context['teachers'] = self.object.teacher.all()
 
         return context
 
@@ -1463,10 +1448,6 @@ class StudentUpdateView(LoginRequiredMixin, generic.UpdateView):
         view_title = "Update {}".format(self.object)
 
         teacher = get_object_or_404(Teacher, user=self.request.user)
-        if teacher.has_homeroom():
-            homerooms = teacher.homeroom_set.all()
-            context['homerooms'] = homerooms
-
         context['teacher'] = teacher
 
         context["view_title"] = view_title
@@ -1714,6 +1695,9 @@ class SubjectUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     template_name = "teachadmin/subject_update.html"
     context_object_name = "subject"
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

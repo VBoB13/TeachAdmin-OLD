@@ -379,7 +379,12 @@ class Student(models.Model):
         blank=True,
         default="",
         help_text="Within 20 characters.")
-    homeroom = models.ForeignKey(HomeRoom, blank=True, null=True, on_delete=models.SET_NULL)
+    homeroom = models.ForeignKey(
+        HomeRoom,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        help_text="Optional.")
     subject = models.ManyToManyField(Subject)
     teacher = models.ManyToManyField(Teacher)
     
@@ -552,7 +557,8 @@ class LessonTestScore(models.Model):
     class Meta:
         ordering = [
             'lessonTest',
-            'student'
+            'student',
+            '-score',
         ]
 
     def __str__(self):
@@ -691,7 +697,7 @@ class HomeworkScore(models.Model):
         ]
 
     def __str__(self):
-        return self.score
+        return str(self.score)
 
     def get_absolute_url(self):
         return reverse("teachadmin:homework_detail",

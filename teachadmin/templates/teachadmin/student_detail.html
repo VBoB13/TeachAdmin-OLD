@@ -11,70 +11,22 @@
 {% endblock view_title_block %}
 
 {% block content_block %}
-    <p><h2>{{ student }}</h2></p>
-      <div class="row border-bottom border-secondary">
-        <div class="col-3">
-          <!-- LOADING Student's test scores -->
-            {% if test_scores %}
-              <p><h3>Test Scores</h3></p>
-                <ul>
-                  {% for score in test_scores %}
-                    <li>
-                      <h6>{{ score }}</h6>
-                    </li>
-                  {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-        
-        <div class="col-9" align="center">
-          {% if file_exists %}
-            <img src="{% static 'teachadmin/students/' %}{{ student.pk }}.png"
-              alt="{{ student }} Scores">
-          {% endif %}
-        </div>
-      </div>
-    <!-- LOADING Student's assignment scores -->
-    {% if assignment_scores %}
+    <p><h2><u>Info:</u></h2></p>
     <div class="row border-bottom border-secondary">
-      <p><h3>Assigment Scores</h3></p>
-        <ul>
-          {% for score in assignment_scores %}
-            <li>
-              <h5>{{ score }}</h5>
-            </li>
-          {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-{% endblock %}
+      <div class="col-6">
+        <h5>Teacher(s):</h5> 
+        {% for teacher in teachers %}
+          {% if forloop.first %}
+            <ol>
+          {% endif %}
+            <li>{{ teacher }}</li>
+          {% if forloop.last %}
+            </ol>
+          {% endif %}
+        {% endfor %}</h5>
+      </div>
+      <div class="col-6">
 
-{% block mid_block %}
-  <div class="row border-bottom border-secondary">
-    <h3>Subjects</h3>
-    <ul>
-      {% for subject in subjects %}
-        <li><h4>{{ subject }}</h4>
-          {% for exam in subject.exam_set.all %}
-            {% if forloop.first %}
-              <ul>
-            {% endif %}
-            <li><h6>{{ exam }}</h6></li>
-            {% if forloop.last %}
-              </ul>
-            {% endif %}
-          {% empty %}
-            <p>
-              <h5 class="text-muted">No exams for {{ subject }} yet...</h5>
-            </p>
-          {% endfor %}
-        </li>
-      {% empty %}
-        <p>
-          <h5 class="text-muted">{{ student }} is not enrolled in any subjects yet...</h5>
-        </p>
-      {% endfor %}
-    </ul>
-    <p><h5><a href="{% url 'teachadmin:subject_new_student' student.pk %}">Add subject</a></h5></p>
-  </div>
+      </div>
+    </div>
 {% endblock %}

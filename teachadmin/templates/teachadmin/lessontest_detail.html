@@ -20,7 +20,7 @@
             <p><strong>Deadline:</strong><br>{{ lessontest.test_date }}</p>
 
             <h3><u>Scores:</u></h3>
-            {% for score in lessontest.lessontestscore_set.all %}
+            {% for score in scores %}
                 {% if forloop.first %}
                     <ul>
                 {% endif %}

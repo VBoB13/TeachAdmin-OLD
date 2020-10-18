@@ -30,7 +30,13 @@ class SchoolForm(forms.ModelForm):
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        exclude = ['homeroom', 'subject', 'teacher']
+        exclude = ['subject', 'teacher']
+    
+    def __init__(self, *args, **kwargs):
+        teacher = kwargs.pop('teacher', None)
+        super().__init__(*args, **kwargs)
+        if teacher:
+            self.fields['homeroom'].queryset = teacher.homeroom_set.all()
 
 
 class StudentToHomeRoomForm(forms.ModelForm):
@@ -144,10 +150,13 @@ class SubjectForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         teacher = kwargs.pop('teacher', None)
+        subject = kwargs.pop('subject', None)
         super().__init__(*args, **kwargs)
         if teacher:
             self.fields['students'].queryset = teacher.student_set.all()
-        self.fields['students'].empty_label = None
+            self.fields['students'].empty_label = None
+        if subject:
+            self.fields['students'].initial = [s.pk for s in subject.student_set.all()]
         self.fields['students'].help_text = "Ctrl + Left-Click to (de)select students."
 
 
