@@ -166,6 +166,8 @@ class Graph():
             axes.legend(title='Gender', loc='center left',
                         bbox_to_anchor=(1.02, 0.90))
         else:
+            if self.df.select_dtypes(include=['float64']).empty:
+                return False
             sns.swarmplot(
                 data=self.df.select_dtypes(include=['float64']),
                 palette='bright',

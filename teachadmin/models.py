@@ -194,7 +194,7 @@ class Exam(models.Model):
         for exam in all_exams_in_subject:
             if not self.pk and self.name == exam.name:
                 raise ValidationError({
-                    "name": ValidationError(_("Exam name already exists. Try another name."), code='invalid')
+                    "name": ValidationError(_("The exam name already exists in this subject."), code='invalid')
                 })
         if self.max_score < self.min_score:
             raise ValidationError(_("Maximum score cannot be lower than minimum score!"))

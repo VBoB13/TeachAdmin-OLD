@@ -143,13 +143,12 @@ class SubjectForm(forms.ModelForm):
     students = forms.ModelMultipleChoiceField(queryset=None)
 
     def __init__(self, *args, **kwargs):
-        subject = kwargs.pop('subject', None)
         teacher = kwargs.pop('teacher', None)
         super().__init__(*args, **kwargs)
-        if teacher and subject:
+        if teacher:
             self.fields['students'].queryset = teacher.student_set.all()
-            self.fields['students'].initial = [s.pk for s in subject.student_set.all()]
         self.fields['students'].empty_label = None
+        self.fields['students'].help_text = "Ctrl + Left-Click to (de)select students."
 
 
 class SubjectToStudentForm(forms.ModelForm):

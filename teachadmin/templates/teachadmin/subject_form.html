@@ -3,42 +3,18 @@
 {% load bootstrap4 %}
 
 {% block view_title_block %}
-    <div class="jumbotron bg-secondary" align="center">
-        <p><h1 class="display-4">{{ title }}</h1></p>
+    <div class="jumbotron bg-secondary">
+        <p><h1 align="center" class="display-4">{{ title }}</h1></p>
     </div>
 {% endblock %}
 
 {% block content_block %}
-    <div class="row">
-        <div class="col-4">
-            <p><h3>{{ student.first_name }}</h3></p>
-            <p>
-            {% if student.homeroom %}
-                <h5>Homeroom: {{ student.homeroom }}</h5>
-            {% endif %}
-            {% for subject in student.subject.all %}
-                
-                {% if forloop.first %}
-                    <h5>Subjects:</h5>
-                    <ol>
-                {% endif %}
-                
-                <li>{{ subject }}</li>
-
-                {% if forloop.last %}
-                    </ol>
-                {% endif %}
-            {% empty %}
-                <h5 class="text-muted">
-                    Not enrolled in any subjects yet.
-                </h5>
-            {% endfor %}
-        </div>
-        <div class="col-6">
+    <div class="row align-items-start">
+        <div class="col-10">
             <form class="form" method="POST">
                 {% csrf_token %}
                 {% bootstrap_form form %}
-                <input type="submit" value="Save" class="btn btn-primary">
+                <input type="submit" value="Add Subject" class="btn btn-primary">
             </form>
         </div>
         <div class="col-2">

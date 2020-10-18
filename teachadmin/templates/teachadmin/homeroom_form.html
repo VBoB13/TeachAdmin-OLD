@@ -17,8 +17,12 @@
                 {% bootstrap_form form %}
                 {% if not subject %}
                     <p>
-                        <input type="file" name="homeroomfile" class="form-control-file">
-                        <small class="form-text text-muted">CSV-files (.csv) only</small>
+                        <div class="input-group">
+                            <div class="custom-file">
+                                <input type="file" name="homeroomfile" class="custom-file-input" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04">
+                                <label class="custom-file-label text-muted" for="inputGroupFile04">CSV-files (.csv) only (optional)</label>
+                            </div>
+                        </div>
                     </p>
                 {% endif %}
                 <p>

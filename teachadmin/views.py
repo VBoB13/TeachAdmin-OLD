@@ -1664,24 +1664,24 @@ class SubjectCreateView(LoginRequiredMixin, generic.CreateView):
     redirect_field_name = 'teachadmin/subject_detail.html'
 
     model = Subject
+    form_class = forms.SubjectForm
 
     def dispatch(self, request, *args, **kwargs):
-        if kwargs.get('student_pk') != None:
-            self.form_class = forms.SubjectToStudentForm
-        else:
-            self.form_class = forms.SubjectForm
-
         return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        
+        if self.form_class == forms.SubjectToStudentForm:
+            kwargs['student'] = Student.objects.filter(pk=self.kwargs.get('student_pk'))
+        kwargs['teacher'] = get_object_or_404(Teacher, user=self.request.user)
+        
+        return kwargs
 
     def form_valid(self, form):
         teacher = get_object_or_404(Teacher, user=self.request.user)
         subject = form.save()
         subject.teacher.add(teacher)
-        
-        if self.form_class == forms.SubjectToStudentForm:
-            student = Student.objects.get(pk=self.kwargs['student_pk'])
-            subject.student_set.add(student)
-
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
