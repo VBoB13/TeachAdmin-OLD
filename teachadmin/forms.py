@@ -80,10 +80,12 @@ class HomeRoomForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         teacher = kwargs.pop('teacher', False)
+        school = kwargs.pop('school', False)
         super().__init__(*args, **kwargs)
-        if teacher:
-            self.fields['school'].queryset = teacher.school_set.all()
-            self.fields['school'].empty_label = None
+        self.fields['school'].queryset = teacher.school_set.all()
+        self.fields['school'].empty_label = None
+        if school:
+            self.fields['school'].initial = school.pk
 
 
 class HomeRoomAddSubjectForm(forms.ModelForm):

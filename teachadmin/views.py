@@ -404,7 +404,7 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
     model = HomeRoom
     form_class = forms.HomeRoomForm
 
-    def _process_homeroomfile(self, homeroom):
+    def _process_homeroomfile(self, homeroom, teacher):
         if self.request.method == "POST":
             try:
                 results = pd.read_csv(
@@ -414,24 +414,35 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
                 print(err)
                 raise Http404("Unable to read CSV-file")
             else:
+                results['Last'] = results['Last'].astype('str')
+                results['Last'] = results['Last'].apply(last_name_check)
                 print(results)
                 results.info()
 
                 for row in results.itertuples():
-                    student, created = Student.objects.get_or_create(
+                    student = Student(
                         student_number=row.Number,
                         first_name=row.First,
                         last_name=row.Last,
                         gender=row.Gender,
                         homeroom=homeroom
                     )
-                    print(student)
+                    try:
+                        student.full_clean()
+                    except ValidationError as verr:
+                        non_field_errors = verr.message_dict[NON_FIELD_ERRORS]
+                    else:
+                        student.save()
+                        print(student)
+                        teacher.student_set.add(student)
         else:
             print("Try with a POST-reqest next time.")
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['teacher'] = get_object_or_404(Teacher, user=self.request.user)
+        if self.kwargs.get('school_pk', False):
+            kwargs['school'] = get_object_or_404(School, pk=self.kwargs.get('school_pk'))
         return kwargs
 
     def form_valid(self, form):
@@ -441,7 +452,7 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
         teacher.homeroom_set.add(homeroom)
 
         if self.request.FILES.get('homeroomfile', False):
-            self._process_homeroomfile(homeroom)
+            self._process_homeroomfile(homeroom, teacher)
 
         return HttpResponseRedirect(homeroom.get_absolute_url())
 
@@ -450,8 +461,6 @@ class HomeRoomCreateView(LoginRequiredMixin, generic.CreateView):
 
         if self.kwargs.get('school_pk'):
             school = get_object_or_404(School, pk=self.kwargs['school_pk'])
-            form = forms.HomeRoomForm(initial={'school':school})
-            context['form'] = form
             self.view_title = 'Create Homeroom for {}'.format(school)
         else:
             self.view_title = 'Create Homeroom'
@@ -1038,7 +1047,11 @@ class SchoolListView(LoginRequiredMixin, generic.ListView):
     def get_queryset(self):
         teacher = get_object_or_404(Teacher, user=self.request.user)
         return teacher.school_set.all()
-
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
+    
 
 class SchoolDetailView(LoginRequiredMixin, generic.DetailView):
     login_url = 'teachadmin/login/'
@@ -2047,3 +2060,7 @@ def gender_map(gender):
         return 'Male'
     else:
         return 'Other'
+
+def last_name_check(last_name):
+    if last_name == "nan":
+        return ""

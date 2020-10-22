@@ -16,7 +16,7 @@ class Teacher(models.Model):
     # Additional Info
     portfolio_site = models.URLField(blank=True)
     profile_pic = models.ImageField(upload_to='teachers/profile_pics/', blank=True)
-    country = CountryField(blank=True, blank_label='(Select country)')
+    country = CountryField(blank=True, blank_label='(Select country)', help_text="Optional.")
 
     def __str__(self):
         return self.user.username
@@ -383,7 +383,7 @@ class Student(models.Model):
         HomeRoom,
         blank=True,
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         help_text="Optional.")
     subject = models.ManyToManyField(Subject)
     teacher = models.ManyToManyField(Teacher)
@@ -417,6 +417,10 @@ class Student(models.Model):
 
     def get_absolute_url(self):
         return reverse("teachadmin:student_detail", kwargs={"pk": self.pk})
+
+    def clean(self):
+        if self.last_name == None:
+            self.last_name = ""
 
 
 class Assignment(models.Model):
@@ -520,7 +524,7 @@ class ExamScore(models.Model):
             })
 
     def clean(self):
-        # First we check to see whether the chosen student DO NOT have any scores for the exam
+        # First we check to see whether the chosen student DOES NOT have any scores for the exam
         if self.student not in self.exam.students():
         # Do not allow scores to be set higher than exam's max_score
             if self.score > self.exam.max_score:

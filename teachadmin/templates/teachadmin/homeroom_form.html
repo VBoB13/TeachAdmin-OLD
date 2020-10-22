@@ -22,11 +22,14 @@
                                 <input type="file" name="homeroomfile" class="custom-file-input" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04">
                                 <label class="custom-file-label text-muted" for="inputGroupFile04">CSV-files (.csv) only (optional)</label>
                             </div>
+                            <div class="input-group-append">
+                                <span class="input-group-text visually-hidden" id="inputGroupFileAddon04">Upload</span>
+                            </div>
                         </div>
                     </p>
                 {% endif %}
                 <p>
-                    <input type="submit" value="{% if form.instance %}Update{% else %}Create{% endif %}" class="btn btn-primary">
+                    <input type="submit" value="{% if form.instance.pk %}Update{% else %}Create{% endif %}" class="btn btn-primary">
                 </p>
             </form>
         </div>
