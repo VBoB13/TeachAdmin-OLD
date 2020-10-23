@@ -12,6 +12,22 @@
 {% block content_block %}
     <div class="row">
         <div class="col">
+            <h4><u>Students ({{ students.count }}):</u></h4>
+            {% for student in students %}
+                {% if forloop.first %}
+                    <ul>
+                {% endif %}
+                    <li><a href="{% url 'teachadmin:student_detail' student.pk %}">{{ student }}</a></li>
+                {% if forloop.last %}
+                    </ul>
+                {% endif %}
+            {% empty %}
+                <p class="text-muted">
+                    No students associated with {{ school|title }}.
+                </p>
+            {% endfor %}
+        </div>
+        <div class="col">
             <h4><u>Home rooms:</u></h4>
             {% for homeroom in homerooms %}
                 {% if forloop.first %}
@@ -20,6 +36,19 @@
                 
                 <li>
                     <a href="{% url 'teachadmin:homeroom_detail' homeroom.pk %}">{{ homeroom|title }}</a>
+                    {% for key, value in homerooms_stats_dict.items %}
+                        {% if key == homeroom.name %}
+                            {% for stat, stat_value in value.items %}
+                                {% if forloop.first %}
+                                    <ul>
+                                {% endif %}
+                                    <li><u>{{ stat }}</u>: {{ stat_value }}</li>
+                                {% if forloop.last %}
+                                    </ul>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
                 </li>
 
                 {% if forloop.last %}

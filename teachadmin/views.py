@@ -1063,8 +1063,23 @@ class SchoolDetailView(LoginRequiredMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["homerooms"] = self.object.homeroom_set.all()
+        homerooms = self.object.homeroom_set.all()
+        students = Student.objects.filter(homeroom__in=homerooms)
+        
         context["subjects"] = self.object.subject_set.all()
+        context["homerooms"] = homerooms
+        context["students"] = students
+
+        homerooms_stats_dict = {}
+        for homeroom in homerooms:
+            homerooms_stats_dict["{}".format(homeroom)] = {}
+            graph = Graph(homeroom, 'df')
+            homerooms_stats_dict["{}".format(homeroom)].update(
+                graph.get_generalstats_dict()
+            )
+        
+        context['homerooms_stats_dict'] = homerooms_stats_dict
+
         return context
     
 

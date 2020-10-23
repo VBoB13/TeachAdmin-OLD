@@ -24,14 +24,16 @@ MULTIPLE_SCORE_MODELS = (lesson, subject, homeroom)
 class Graph():
     """ This class is meant to simplify the code for generating graphs
         for all the different views in the TeachAdmin application.
-        params: model (model object) """
+        params: 
+        model object (in view): self.object
+        get_objects: 'all' or any other string TO skip generating graph-part (uri)"""
 
     model_instance = None
     model = None
     uri = False
     df = pd.DataFrame()
 
-    def __init__(self, model_instance):
+    def __init__(self, model_instance, get_objects: str = 'all'):
         try:
             for score_model in SINGLE_SCORE_MODELS:
                 if type(model_instance) == type(score_model):
@@ -42,7 +44,8 @@ class Graph():
 
             self.model_instance = model_instance
             self.df = self._get_dataframe()
-            self.uri = self._get_uri()
+            if get_objects == 'all':
+                self.uri = self._get_uri()
 
         except TypeError as te:
             print("Cannot establish Graph object.")
@@ -203,5 +206,13 @@ class Graph():
             uri = self._create_uri()
             return uri
         return None
+
+    def get_generalstats_dict(self):
+        if self.model == homeroom:
+            return {
+                "Avg. score": round(self.df.mean(axis=1).mean(), 1),
+                "Median score": self.df.median(axis=1).median(),
+                "Std. Dev.": round(self.df.std(axis=0).mean(), 2)
+            }
 
     
