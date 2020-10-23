@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 from django.conf import settings
 
@@ -1063,10 +1064,13 @@ class SchoolDetailView(LoginRequiredMixin, generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        subjects = self.object.subject_set.all()
         homerooms = self.object.homeroom_set.all()
-        students = Student.objects.filter(homeroom__in=homerooms)
+        students = Student.objects.filter(
+            Q(homeroom__in=homerooms) | Q(subject__in=subjects)
+        )
         
-        context["subjects"] = self.object.subject_set.all()
+        context["subjects"] = subjects
         context["homerooms"] = homerooms
         context["students"] = students
 
