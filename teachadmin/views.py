@@ -394,6 +394,9 @@ class HomeRoomDetailView(LoginRequiredMixin, generic.DetailView):
 
         graph = Graph(self.object)
         context['graph'] = graph.uri
+        stats = graph.get_generalstats_dict()
+        if stats:
+            context['stats'] = stats
 
         return context
     

@@ -71,22 +71,41 @@ class HomeRoom(models.Model):
                 "pk": self.pk
                 })
 
-    def students(self):
-        """ Returns a QuerySet of all the students linked to the current HomeRoom. """
-        return self.student_set.all()
+    def students(self, as_list:bool=False):
+        """ Returns a QuerySet of all the students linked to the current HomeRoom. 
+            If none are found, this returns False.
+            Setting as_list=True will return a list of the students' full names.
+            params: as_list(bool)=False
+            OUTPUT: QuerySet, List or False"""
+        qs = self.student_set.all()
+        if qs.exists():
+            if as_list:
+                return ["{} {}".format(
+                    student.first_name, student.last_name
+                ) for student in qs]
+            return qs
+        return False
     
     def subjects(self):
         """ Returns a QuerySet of all the subjects linked to the current HomeRoom. """
-        return self.subject_set.all()
+        qs = self.subject_set.all()
+        if qs.exists():
+            return qs
+        return False
 
-    def get_score_models(self):
+    def get_score_models(self, as_tuples:bool=False):
         """ Returns a list of score models (Exam, Assignment, LessonTest, Homework)
             that are linked to the current HomeRoom """
         score_model_list = []
         qs = self.subjects()
-        if qs.exists():
+        if qs:
             for subject in qs:
-                score_model_list.extend(subject.get_score_models())
+                if as_tuples:
+                    score_model_list.extend(
+                        subject.get_score_models(as_tuples=True)
+                    )
+                else:
+                    score_model_list.extend(subject.get_score_models())
         return score_model_list
 
 
@@ -123,35 +142,79 @@ class Subject(models.Model):
 
     def has_exam(self):
         return self.exam_set.all().exists()
+
+    def get_exams(self):
+        """ Model method that retrieves all the related Exams for the current Subject.
+            If no Exams are found, it returns False
+            PARAMS: None
+            RETURNS: QuerySet / False """
+        qs = self.exam_set.all()
+        if qs.exists():
+            return qs
+        return False
     
     def has_assignment(self):
         return self.assignment_set.all().exists()
+
+    def get_assignments(self):
+        """ Model method that retrieves all the related Assignments for the current Subject.
+            If no Exams are found, it returns False
+            PARAMS: None
+            RETURNS: QuerySet / False """
+        qs = self.assignment_set.all()
+        if qs.exists():
+            return qs
+        return False
     
     def has_lesson(self):
         return self.lesson_set.all().exists()
-    
-    def students(self):
-        return self.student_set.all()
 
-    def get_score_models(self):
+    def get_lessons(self):
+        """ Model method that retrieves all the related Lessons for the current Subject.
+            If no Exams are found, it returns False
+            PARAMS: None
+            RETURNS: QuerySet / False """
+        qs = self.lesson_set.all()
+        if qs.exists():
+            return qs
+        return False
+    
+    def students(self, as_list:bool=False):
+        """ Attempts to retrieve the students registered at the current Subject.
+            Failure to do so will return False instead.
+            params: as_list (bool)=False
+            OUTPUT: QuerySet, List or False """
+        qs = self.student_set.all()
+        if qs.exists():
+            if as_list:
+                return [
+                    "{} {}".format(
+                        student.first_name, student.last_name
+                        ) for student in qs]
+            return qs
+        return False
+
+    def get_score_models(self, as_tuples:bool = False):
         score_models = []
-        if self.has_exam():
-            exam_qs = self.exam_set.all()
+        
+        exam_qs = self.get_exams()
+        if exam_qs:
             for exam in exam_qs:
                 score_models.append(exam)
 
-        if self.has_assignment():
-            assignment_qs = self.assignment_set.all()
+        assignment_qs = self.get_assignments()
+        if assignment_qs:
             for assignment in assignment_qs:
                 score_models.append(assignment)
             
-        if self.has_lesson():
-            lessons = self.lesson_set.all()
-            for lesson in lessons:
+        lesson_qs = self.get_lessons()
+        if lesson_qs:
+            for lesson in lesson_qs:
                 lesson_models_list = lesson.get_score_models()
-                for score_model in lesson_models_list:
-                    score_models.append(score_model)
+                score_models.extend(lesson_models_list)
         
+        if as_tuples:
+            return [(self, model) for model in score_models]
         return score_models
 
 
@@ -175,9 +238,9 @@ class Exam(models.Model):
 
     class Meta:
         ordering = [
-            'subject',
             'date',
-            'name'
+            'name',
+            'subject',
         ]
 
     def __str__(self):
@@ -239,8 +302,8 @@ class Lesson(models.Model):
 
     class Meta:
         ordering = [
+            'name',
             'start_date',
-            'name'
         ]
 
     def __str__(self):
@@ -257,14 +320,34 @@ class Lesson(models.Model):
             INPUT: None
             OUTPUT: bool """
         return self.lessontest_set.all().exists()
+
+    def get_lessontests(self):
+        """ Attempts to retrieve all LessonTests associated with the current Lesson.
+            If none are found, it will return False.
+            PARAMS: None
+            OUTPUT: QuerySet / False """
+        qs = self.lessontest_set.all()
+        if qs.exists():
+            return qs
+        return False
     
     def has_homework(self):
         """ If the Lesson has any homeworks, it returns True. Otherwise, it returns False.
             INPUT: None
             OUTPUT: bool """
         return self.homework_set.all().exists()
+
+    def get_homeworks(self):
+        """ Attempts to retrieve all Homeworks associated with the current Lesson.
+            If none are found, it will return False.
+            PARAMS: None
+            OUTPUT: QuerySet / False """
+        qs = self.homework_set.all()
+        if qs.exists():
+            return qs
+        return False
     
-    def get_score_models(self):
+    def get_score_models(self, as_tuples:bool=False):
         """ This method looks up whether there are any tests or homeworks for the current lesson.
             If there are, it returns a list of the tests and homeworks.
             Returns a list of LessonTests and Homeworks (respectively)
@@ -272,18 +355,20 @@ class Lesson(models.Model):
             OUTPUT: list [LessonTest-1, LessonTest-2, Homework-1 ... ModelObject-N] """
 
         test_hw_list = []
-        if self.has_lessontest():
-            tests = self.lessontest_set.all()
-            for test in tests:
+        
+        lessontests = self.get_lessontests()
+        homeworks = self.get_homeworks()
+        if lessontests:
+            for test in lessontests:
                 if test.has_score():
                     test_hw_list.append(test)
-
-        if self.has_homework():
-            homeworks = self.homework_set.all()
+        if homeworks:
             for homework in homeworks:
                 if homework.has_score():
                     test_hw_list.append(homework)
 
+        if as_tuples:
+            return [(self, model) for model in test_hw_list]
         return test_hw_list
 
     def students(self):
@@ -308,9 +393,9 @@ class LessonTest(models.Model):
 
     class Meta:
         ordering = [
+            'name',
             'test_date',
             'lesson',
-            'name'
         ]
 
     def __str__(self):
@@ -350,19 +435,23 @@ class LessonTest(models.Model):
             If there are no scores for the test, it will return False.
             params: None
             OUTPUT: list / False """
-
-        if self.has_score():
+        qs = self.lessontestscore_set.select_related('student').order_by('student', 'score').distinct('student')
+        if qs.exists():
             students = []
-            scores = self.lessontestscore_set.all().select_related('student')
-            for score in scores:
-                if score.student not in students:
-                    students.append(score.student)
+            for score in qs:
+                students.append(score.student)
             return students
         return []
 
     def scores(self):
-        """ Returns all the scores associated with the current test. """
-        return self.lessontestscore_set.all().select_related('student')
+        """ Attempts to retrieve all of the related LessonTestScores to the current LessonTest.
+            If none are found, it returns False.
+            PARAMS: None
+            OUTPUT: LessonTestScores (QuerySet) / False (bool) """
+        qs = self.lessontestscore_set.all().select_related('student')
+        if qs.exists():
+            return qs
+        return False
 
 
 class Student(models.Model):
@@ -437,7 +526,7 @@ class Assignment(models.Model):
         ordering = [
             'name',
             'deadline',
-            'subject'
+            'subject',
         ]
 
     def get_absolute_url(self):
@@ -479,7 +568,11 @@ class AssignmentScore(models.Model):
         help_text="Format: YYYY-MM-DD HH:MM:SS")
 
     class Meta:
-        ordering = ['assignment', 'turn_in_time', 'score']
+        ordering = [
+            'assignment',
+            'turn_in_time',
+            'score',
+            ]
 
     def __str__(self):
         if self.assignment.min_score == 0 and self.assignment.max_score == 100:
@@ -511,7 +604,7 @@ class ExamScore(models.Model):
             'exam',
             'timestamp',
             'score',
-            'student'
+            'student',
         ]
 
     def __str__(self):
@@ -650,8 +743,9 @@ class Homework(models.Model):
 
     class Meta:
         ordering = [
+            'deadline',
+            'name',
             'lesson',
-            'name'
         ]
 
     def __str__(self):
@@ -695,9 +789,9 @@ class HomeworkScore(models.Model):
 
     class Meta:
         ordering = [
-            'student',
             'homework',
-            'score'
+            'student',
+            'score',
         ]
 
     def __str__(self):

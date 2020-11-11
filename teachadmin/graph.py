@@ -8,25 +8,26 @@ import io
 import urllib
 import base64
 
-assignment = Assignment()
-exam = Exam()
-lessontest = LessonTest()
-homework = Homework()
+ASSIGNMENT = Assignment()
+EXAM = Exam()
+LESSONTEST = LessonTest()
+HOMEWORK = Homework()
 
-SINGLE_SCORE_MODELS = (assignment, exam, lessontest, homework)
+SINGLE_SCORE_MODELS = (ASSIGNMENT, EXAM, LESSONTEST, HOMEWORK)
 
-lesson = Lesson()
-subject = Subject()
-homeroom = HomeRoom()
+LESSON = Lesson()
+SUBJECT = Subject()
+HOMEROOM = HomeRoom()
 
-MULTIPLE_SCORE_MODELS = (lesson, subject, homeroom)
+MULTIPLE_SCORE_MODELS = (LESSON, SUBJECT, HOMEROOM)
 
 class Graph():
     """ This class is meant to simplify the code for generating graphs
         for all the different views in the TeachAdmin application.
         params: 
         model object (in view): self.object
-        get_objects: 'all' or any other string TO skip generating graph-part (uri)"""
+        get_objects: 'all' => gets the uri on top of the DataFrame.
+                    Any other string WILL skip generating graph-part (uri)"""
 
     model_instance = None
     model = None
@@ -89,7 +90,25 @@ class Graph():
 
     def _create_multiple_score_df(self):
         students = self.model_instance.students()
-        score_model_list = self.model_instance.get_score_models()
+
+        if self.model == HOMEROOM:
+            subjects = self.model_instance.subjects()
+            if subjects:
+                tuple_list = []
+                score_model_list = []
+                for subject in subjects:
+                    score_model_list.extend(subject.get_score_models())
+                    tuple_list.extend(subject.get_score_models(as_tuples=True))
+
+                names = ['Subject', 'Score model']
+                df_columns = pd.MultiIndex.from_tuples([
+                    ("{}".format(subject.name), "{}".format(model.name)) for (subject, model) in tuple_list
+                    ])
+                index = pd.Index(self.model_instance.students(as_list=True))
+        else:
+            score_models_list = self.model_instance.get_score_models()
+            df_columns = ["{}".format(model.name) for model in score_models_list]
+        
         df = pd.DataFrame()
         if (len(score_model_list) > 0) and students.exists():
             scores_dict = {
@@ -105,7 +124,7 @@ class Graph():
                     if student not in scores_dict['Student']:
                         scores_dict['Student'].append(student)
                         scores_dict['Gender'].append(student.gender)
-                    if type(score_model) in (type(lessontest), type(homework), type(exam), type(assignment)):
+                    if type(score_model) in (type(LESSONTEST), type(HOMEWORK), type(EXAM), type(ASSIGNMENT)):
                         if all_scores.filter(student=student).exists():
                             scores_list = []
                             for score in all_scores.filter(student=student):
@@ -113,10 +132,6 @@ class Graph():
                             scores_dict['{}({})'.format(score_model, score_model.pk)].append(max(scores_list))
                         else:
                             scores_dict['{}({})'.format(score_model, score_model.pk)].append(None)
-            
-            for key, value in scores_dict.items():
-                print(key, value)
-            
             try:
                 df = pd.DataFrame(data=scores_dict)
             except Exception as err:
@@ -125,7 +140,6 @@ class Graph():
                 df = pd.DataFrame()
             else:
                 df['Gender'] = df['Gender'].apply(self._gender_map)
-                print(df)
         
         return df
 
@@ -208,11 +222,14 @@ class Graph():
         return None
 
     def get_generalstats_dict(self):
-        if self.model == homeroom:
-            return {
-                "Avg. score": round(self.df.mean(axis=1).mean(), 1),
-                "Median score": self.df.median(axis=1).median(),
+        if self.model in MULTIPLE_SCORE_MODELS:
+            stat_dict = {
+                "Avg. score": round(self.df.mean(axis=0).mean(), 1),
+                "Median score": self.df.median(axis=0).median(),
                 "Std. Dev.": round(self.df.std(axis=0).mean(), 2)
             }
+            return stat_dict
+        else:
+            return False
 
     
